@@ -24,10 +24,11 @@ typedef struct {
     float y;
 } Obstacle;
 
-Vehicle cars[3] = {
+Vehicle cars[4] = {
     {0, 100, {0, 0, 255}},   // Azul
     {1, 100, {255, 0, 0}},   // Rojo
-    {2, 100, {0, 255, 0}}    // Verde
+    {2, 100, {0, 255, 0}},    // Verde
+    {3, 100, {255, 255, 0}}
 };
 int selectedCar = 0;
 float roadY = 0;
@@ -132,6 +133,10 @@ void display() {
         glRasterPos2f(60, SCREEN_HEIGHT / 2 - 30);
         char option3[] = "3 - Buseta del fas ";
         for (char* c = option3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        
+        glRasterPos2f(60, SCREEN_HEIGHT / 2 - 60);
+        char option4[] = "4 - Motocicleta";
+        for (char* c = option4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
     
        
 
@@ -228,9 +233,10 @@ void keyboard(unsigned char key, int x, int y) {
     case '1':
     case '2':
     case '3':
+    case '4':
         if (showStartScreen || gameOver) {
             selectedCar = key - '1'; // convierte '1', '2', '3' a 0, 1, 2
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 cars[i].y = 100;
             }
             isJumping = 0;
