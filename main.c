@@ -14,9 +14,9 @@
 #define NUM_OBSTACLES 5
 
 typedef struct {
-    int lane; // 0 a 3
+    int lane;
     float y;
-    int color[3]; // RGB
+    int color[3];
 } Vehicle;
 
 typedef struct {
@@ -25,11 +25,12 @@ typedef struct {
 } Obstacle;
 
 Vehicle cars[4] = {
-    {0, 100, {0, 0, 255}},   // Azul
-    {1, 100, {255, 0, 0}},   // Rojo
-    {2, 100, {0, 255, 0}},    // Verde
-    {3, 100, {255, 255, 0}}
+    {0, 100, {0, 0, 255}},     // Azul
+    {1, 100, {255, 0, 0}},     // rojo
+    {2, 100, {0, 255, 0}},     // verde
+    {3, 100, {255, 255, 0}}   
 };
+
 int selectedCar = 0;
 float roadY = 0;
 Obstacle obstacles[NUM_OBSTACLES];
@@ -39,10 +40,8 @@ float initialY = 100.0f;
 int score = 0;
 int gameOver = 0;
 int showStartScreen = 1;
-
 int laneX[NUM_LANES];
 
-// Dibujar rect�ngulo
 void drawRect(float x, float y, float width, float height, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
     glBegin(GL_QUADS);
@@ -53,7 +52,6 @@ void drawRect(float x, float y, float width, float height, int color[3]) {
     glEnd();
 }
 
-// Dibujar c�rculo
 void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
     glBegin(GL_TRIANGLE_FAN);
@@ -102,11 +100,37 @@ int checkCollision() {
     return 0;
 }
 
+void drawKiaSoul(float x, float y) {
+    int bodyColor[] = { 0, 0, 255 };       // Azul
+    int windowColor[] = { 60, 60, 60 };    // Gris oscuro
+    int wheelColor[] = { 0, 0, 0 };        // Negro
+    int lightColor[] = { 255, 255, 0 };    // Amarillo
+
+    // Cuerpo del carro (ahora vertical)
+    drawRect(x, y, 40, 120, bodyColor);  // cuerpo principal
+
+    // Techo (más angosto, arriba)
+    drawRect(x + 5, y + 90, 30, 25, bodyColor);  // techo elevado
+
+    // Ventanas (lado izquierdo del vehículo)
+    drawRect(x + 10, y + 95, 20, 15, windowColor);  // ventana superior
+    drawRect(x + 10, y + 65, 20, 15, windowColor);  // ventana media
+    drawRect(x + 10, y + 35, 20, 15, windowColor);  // ventana inferior
+
+    // Ruedas (una arriba y otra abajo)
+    drawCircle(x - 5, y + 20, 10, 20, wheelColor);  // rueda inferior izquierda
+    drawCircle(x + 45, y + 20, 10, 20, wheelColor); // rueda inferior derecha
+    drawCircle(x - 5, y + 100, 10, 20, wheelColor); // rueda superior izquierda
+    drawCircle(x + 45, y + 100, 10, 20, wheelColor); // rueda superior derecha
+
+    // Faros (ahora en la parte superior)
+    drawCircle(x + 20, y + 118, 4, 10, lightColor); // faro frontal superior
+}
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (showStartScreen || gameOver) {
-        // Fondo oscuro
         glColor3f(0.1f, 0.1f, 0.1f);
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
@@ -115,7 +139,6 @@ void display() {
         glVertex2f(0, SCREEN_HEIGHT);
         glEnd();
 
-        // Mensajes
         glColor3f(1.0, 1.0, 1.0);
 
         glRasterPos2f(60, SCREEN_HEIGHT / 2 + 60);
@@ -131,14 +154,12 @@ void display() {
         for (char* c = option2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         glRasterPos2f(60, SCREEN_HEIGHT / 2 - 30);
-        char option3[] = "3 - Buseta del fas ";
+        char option3[] = "3 - Buseta del fas";
         for (char* c = option3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-        
+
         glRasterPos2f(60, SCREEN_HEIGHT / 2 - 60);
         char option4[] = "4 - Motocicleta";
         for (char* c = option4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-    
-       
 
         if (gameOver) {
             glColor3f(1.0, 0.0, 0.0);
@@ -151,7 +172,6 @@ void display() {
         return;
     }
 
-    // Dibujar l�neas verticales segmentadas (l�neas de carril)
     glColor3f(1.0, 1.0, 1.0);
     for (int i = 1; i < NUM_LANES; ++i) {
         float x = i * (SCREEN_WIDTH / NUM_LANES);
@@ -163,17 +183,21 @@ void display() {
         }
     }
 
-    // Dibujar obst�culos
     int obstacleColor[] = { 255, 0, 0 };
     for (int i = 0; i < NUM_OBSTACLES; i++) {
         drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
     }
 
-    // Dibujar veh�culo
     float carX = laneX[cars[selectedCar].lane] - CAR_WIDTH / 2;
-    drawRect(carX, cars[selectedCar].y, CAR_WIDTH, CAR_HEIGHT, cars[selectedCar].color);
+    float carY = cars[selectedCar].y;
 
-    // Mostrar puntuaci�n
+    if (selectedCar == 0) {
+        drawKiaSoul(carX - 15, carY);
+    }
+    else {
+        drawRect(carX, carY, CAR_WIDTH, CAR_HEIGHT, cars[selectedCar].color);
+    }
+
     glColor3f(1.0, 1.0, 1.0);
     glRasterPos2f(10, SCREEN_HEIGHT - 20);
     char scoreStr[50];
@@ -182,7 +206,6 @@ void display() {
 
     glutSwapBuffers();
 }
-
 
 void update(int value) {
     if (!gameOver && !showStartScreen) {
@@ -235,7 +258,7 @@ void keyboard(unsigned char key, int x, int y) {
     case '3':
     case '4':
         if (showStartScreen || gameOver) {
-            selectedCar = key - '1'; // convierte '1', '2', '3' a 0, 1, 2
+            selectedCar = key - '1';
             for (int i = 0; i < 4; i++) {
                 cars[i].y = 100;
             }
@@ -250,14 +273,12 @@ void keyboard(unsigned char key, int x, int y) {
         break;
     }
 
-    // Limitar posici�n vertical
     if (!showStartScreen && !gameOver) {
         if (cars[selectedCar].y < 0) cars[selectedCar].y = 0;
         if (cars[selectedCar].y > SCREEN_HEIGHT - CAR_HEIGHT)
             cars[selectedCar].y = SCREEN_HEIGHT - CAR_HEIGHT;
     }
 }
-
 
 void init() {
     glMatrixMode(GL_PROJECTION);
