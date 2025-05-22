@@ -28,7 +28,7 @@ Vehicle cars[4] = {
     {0, 100, {0, 0, 255}},     // Azul
     {1, 100, {255, 0, 0}},     // rojo
     {2, 100, {0, 255, 0}},     // verde
-    {3, 100, {255, 255, 0}}   
+    {3, 100, {255, 255, 0}}    // amarillo
 };
 
 int selectedCar = 0;
@@ -55,7 +55,7 @@ void drawRect(float x, float y, float width, float height, int color[3]) {
 void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
     glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < segments; i++) {
+    for (int i = 0; i <= segments; i++) {
         float theta = 2.0f * 3.1415926f * i / segments;
         float x = r * cosf(theta);
         float y = r * sinf(theta);
@@ -101,30 +101,34 @@ int checkCollision() {
 }
 
 void drawKiaSoul(float x, float y) {
-    int bodyColor[] = { 0, 0, 255 };       // Azul
-    int windowColor[] = { 60, 60, 60 };    // Gris oscuro
-    int wheelColor[] = { 0, 0, 0 };        // Negro
-    int lightColor[] = { 255, 255, 0 };    // Amarillo
+    int bodyColor[] = { 0, 0, 255 };
+    int windowColor[] = { 60, 60, 60 };
+    int wheelColor[] = { 0, 0, 0 };
+    int lightColor[] = { 255, 255, 0 };
 
-    // Cuerpo del carro (ahora vertical)
-    drawRect(x, y, 40, 120, bodyColor);  // cuerpo principal
+    drawRect(x, y, 40, 120, bodyColor);
+    drawRect(x + 5, y + 90, 30, 25, bodyColor);
+    drawRect(x + 10, y + 95, 20, 15, windowColor);
+    drawRect(x + 10, y + 65, 20, 15, windowColor);
+    drawRect(x + 10, y + 35, 20, 15, windowColor);
+    drawCircle(x - 5, y + 20, 10, 20, wheelColor);
+    drawCircle(x + 45, y + 20, 10, 20, wheelColor);
+    drawCircle(x - 5, y + 100, 10, 20, wheelColor);
+    drawCircle(x + 45, y + 100, 10, 20, wheelColor);
+    drawCircle(x + 20, y + 118, 4, 10, lightColor);
+}
 
-    // Techo (más angosto, arriba)
-    drawRect(x + 5, y + 90, 30, 25, bodyColor);  // techo elevado
+void drawMoto(float x, float y) {
+    int bodyColor[] = { 205, 173, 0  };  // amarillo (cuerpo principal)
+    int seatColor[] = {20, 20, 20 };          // Gris muy oscuro(asiento)
+    int handleColor[] = { 80, 80, 80 };    // Gris oscuro (manubrio)
+    int wheelColor[] = { 80, 80, 80 };     // Gris oscuro(llantas)
 
-    // Ventanas (lado izquierdo del vehículo)
-    drawRect(x + 10, y + 95, 20, 15, windowColor);  // ventana superior
-    drawRect(x + 10, y + 65, 20, 15, windowColor);  // ventana media
-    drawRect(x + 10, y + 35, 20, 15, windowColor);  // ventana inferior
-
-    // Ruedas (una arriba y otra abajo)
-    drawCircle(x - 5, y + 20, 10, 20, wheelColor);  // rueda inferior izquierda
-    drawCircle(x + 45, y + 20, 10, 20, wheelColor); // rueda inferior derecha
-    drawCircle(x - 5, y + 100, 10, 20, wheelColor); // rueda superior izquierda
-    drawCircle(x + 45, y + 100, 10, 20, wheelColor); // rueda superior derecha
-
-    // Faros (ahora en la parte superior)
-    drawCircle(x + 20, y + 118, 4, 10, lightColor); // faro frontal superior
+    drawRect(x + 10, y + 10, 20, 100, bodyColor);
+    drawRect(x + 10, y + 45, 20, 30, seatColor);
+    drawCircle(x + 20, y + 5, 8, 20, wheelColor);
+    drawCircle(x + 20, y + 115, 8, 20, wheelColor);
+    drawRect(x, y + 110, 40, 5, handleColor);
 }
 
 void display() {
@@ -193,8 +197,9 @@ void display() {
 
     if (selectedCar == 0) {
         drawKiaSoul(carX - 15, carY);
-    }
-    else {
+    } else if (selectedCar == 3) {
+        drawMoto(carX - 15, carY);
+    } else {
         drawRect(carX, carY, CAR_WIDTH, CAR_HEIGHT, cars[selectedCar].color);
     }
 
@@ -297,7 +302,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(412, 675);
-    glutCreateWindow("Carrera Vertical 2D - UES Algoritmos Graficos");
+    glutCreateWindow("UES Algoritmos Graficos");
     init();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
