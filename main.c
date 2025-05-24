@@ -23,6 +23,7 @@ typedef struct {
 typedef struct {
     int lane;
     float y;
+    int type; // 0 = círculo, 1 = rectángulo
 } Obstacle;
 
 Vehicle cars[4] = {
@@ -43,9 +44,8 @@ int gameOver = 0;
 int showStartScreen = 1;
 int laneX[NUM_LANES];
 
-//ALGORITMOS
+// ALGORITMOS DE DIBUJO
 
-//LINEA RECTA BRESENHAM
 void algoritmoBresenham(int x0, int y0, int x1, int y1) {
     int dx = abs(x1 - x0), dy = abs(y1 - y0);
     int sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
@@ -62,7 +62,6 @@ void algoritmoBresenham(int x0, int y0, int x1, int y1) {
     }
 }
 
-//Circulos Polares
 void circulosPolares(int cx, int cy, int r) {
     glBegin(GL_POINTS);
     for (int i = 0; i < 360; i++) {
@@ -83,7 +82,7 @@ void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
         glEnd();
     }
 }
-//ecuación general
+
 void drawLineGeneralEquation(int x0, int y0, int x1, int y1, int color[]) {
     int A = y1 - y0;
     int B = x0 - x1;
@@ -99,7 +98,7 @@ void drawLineGeneralEquation(int x0, int y0, int x1, int y1, int color[]) {
     }
     glEnd();
 }
-//DDA
+
 void drawLineDDA(int x0, int y0, int x1, int y1, int color[]) {
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -119,7 +118,7 @@ void drawLineDDA(int x0, int y0, int x1, int y1, int color[]) {
     }
     glEnd();
 }
-// Círculo (algoritmo del punto medio)
+
 void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
     int x = 0, y = r;
     int p = 1 - r;
@@ -145,42 +144,8 @@ void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
     }
     glEnd();
 }
-// algoritmo por fronteras
-void setPixel(int x, int y) {
-    glVertex2i(x, y);
-}
 
-void getPixelColor(int x, int y, GLubyte* color) {
-    glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, color);
-}
-
-void floodFill(int x, int y, GLubyte* fillColor, GLubyte* borderColor) {
-    GLubyte color[3];
-    getPixelColor(x, y, color);
-    if ((color[0] != borderColor[0] || color[1] != borderColor[1] || color[2] != borderColor[2]) &&
-        (color[0] != fillColor[0] || color[1] != fillColor[1] || color[2] != fillColor[2])) {
-        glColor3ub(fillColor[0], fillColor[1], fillColor[2]);
-        setPixel(x, y);
-        floodFill(x + 1, y, fillColor, borderColor);
-        floodFill(x - 1, y, fillColor, borderColor);
-        floodFill(x, y + 1, fillColor, borderColor);
-        floodFill(x, y - 1, fillColor, borderColor);
-    }
-}
-
-
-//DECORACIONES
-
-//Cielo
-void drawSky() {
-    glColor3f(0.52f, 0.8f, 0.98f);
-    algoritmoBresenham(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT - 100);
-    algoritmoBresenham(0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    int skyColor[] = { 135, 206, 250 }; // Celeste
-    scanLineFill(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100, skyColor);
-
-}
+// FUNCIONES DE DIBUJO DE OBJETOS
 
 void drawRect(float x, float y, float width, float height, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
@@ -204,6 +169,13 @@ void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
     glEnd();
 }
 
+void drawObstacleRect(float x, float y) {
+    int obstacleColor[] = {255, 165, 0}; // Naranja
+    drawRect(x - OBSTACLE_WIDTH/2, y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleColor);
+}
+
+// FUNCIONES DEL JUEGO
+
 void updateJump() {
     if (isJumping) {
         jumpTime += 0.1f;
@@ -220,6 +192,7 @@ void generateObstacles() {
     for (int i = 0; i < NUM_OBSTACLES; i++) {
         obstacles[i].lane = rand() % NUM_LANES;
         obstacles[i].y = SCREEN_HEIGHT + i * (SCREEN_HEIGHT / NUM_OBSTACLES);
+        obstacles[i].type = rand() % 2; // Aleatorio entre 0 y 1
     }
 }
 
@@ -240,11 +213,13 @@ int checkCollision() {
     return 0;
 }
 
+// VEHÍCULOS
+
 void drawKiaSoul(float x, float y) {
-    int bodyColor[] = { 0, 0, 255 };
-    int windowColor[] = { 60, 60, 60 };
-    int wheelColor[] = { 0, 0, 0 };
-    int lightColor[] = { 255, 255, 0 };
+    int bodyColor[] = {0, 0, 255};
+    int windowColor[] = {60, 60, 60};
+    int wheelColor[] = {0, 0, 0};
+    int lightColor[] = {255, 255, 0};
 
     drawRect(x, y, 40, 120, bodyColor);
     drawRect(x + 5, y + 90, 30, 25, bodyColor);
@@ -259,41 +234,44 @@ void drawKiaSoul(float x, float y) {
 }
 
 void drawMicrobus(float x, float y) {
-    int bodyColor[] = { 139, 69, 19 };     // Marr�n oscuro
-    int cabinColor[] = { 255, 140, 0 };    // Naranja
-    int windowColor[] = { 200, 200, 255 }; // Azul claro
-    int wheelColor[] = { 20, 20, 20 };     // Gris oscuro
-    int lightColor[] = { 255, 255, 0 };    // Amarillo
+    int bodyColor[] = {139, 69, 19};     // Marrón oscuro
+    int cabinColor[] = {255, 140, 0};    // Naranja
+    int windowColor[] = {200, 200, 255}; // Azul claro
+    int wheelColor[] = {20, 20, 20};     // Gris oscuro
+    int lightColor[] = {255, 255, 0};    // Amarillo
 
-    // Parte trasera del cami�n (contenedor)
     drawRect(x, y, 50, 100, bodyColor);
-
-    // Cabina del cami�n
     drawRect(x, y + 100, 50, 40, cabinColor);
     drawRect(x + 10, y + 110, 30, 20, windowColor);
-
-    // Ruedas
     drawCircle(x - 5, y + 10, 10, 20, wheelColor);
     drawCircle(x + 55, y + 10, 10, 20, wheelColor);
     drawCircle(x - 5, y + 100, 10, 20, wheelColor);
     drawCircle(x + 55, y + 100, 10, 20, wheelColor);
-
-    // Luces
     drawCircle(x + 25, y + 138, 4, 10, lightColor);
 }
 
-
 void drawMoto(float x, float y) {
-    int bodyColor[] = { 205, 173, 0 };  // amarillo (cuerpo principal)
-    int seatColor[] = { 20, 20, 20 };          // Gris muy oscuro(asiento)
-    int handleColor[] = { 80, 80, 80 };    // Gris oscuro (manubrio)
-    int wheelColor[] = { 80, 80, 80 };     // Gris oscuro(llantas)
+    int bodyColor[] = {205, 173, 0};  // amarillo
+    int seatColor[] = {20, 20, 20};   // Gris muy oscuro
+    int handleColor[] = {20, 20, 20}; // Gris oscuro
+    int wheelColor[] = {20, 20, 20};  // Gris oscuro
 
     drawRect(x + 10, y + 10, 20, 100, bodyColor);
     drawRect(x + 10, y + 45, 20, 30, seatColor);
     drawCircle(x + 20, y + 5, 8, 20, wheelColor);
     drawCircle(x + 20, y + 115, 8, 20, wheelColor);
     drawRect(x, y + 110, 40, 5, handleColor);
+}
+
+// DIBUJAR ESCENA
+
+void drawSky() {
+    glColor3f(0.52f, 0.8f, 0.98f);
+    algoritmoBresenham(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT - 100);
+    algoritmoBresenham(0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    int skyColor[] = {135, 206, 250}; // Celeste
+    scanLineFill(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100, skyColor);
 }
 
 void display() {
@@ -345,7 +323,7 @@ void display() {
         if (gameOver) {
             glColor3f(1.0, 0.2, 0.2);
             glRasterPos2f(230, 400);
-            char gameOverMsg[] = "�GAME OVER!";
+            char gameOverMsg[] = "¡GAME OVER!";
             for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
         }
 
@@ -353,9 +331,7 @@ void display() {
         return;
     }
 
-    //Dibujamos un cielo
     drawSky();
-
 
     glColor3f(1.0f, 0.0f, 0.0f);
     for (int i = 1; i < NUM_LANES; ++i) {
@@ -368,10 +344,15 @@ void display() {
         }
     }
 
-    int obstacleColor[] = { 255, 0, 0 };
     for (int i = 0; i < NUM_OBSTACLES; i++) {
-        if (obstacles[i].y < SCREEN_HEIGHT - 100) { // Evita que pasen al cielo
-            drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
+        if (obstacles[i].y < SCREEN_HEIGHT - 100) {
+            if (obstacles[i].type == 0) {
+                int obstacleColor[] = {255, 0, 0}; // Rojo para círculos
+                drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, 
+                          OBSTACLE_WIDTH / 2, 20, obstacleColor);
+            } else {
+                drawObstacleRect(laneX[obstacles[i].lane], obstacles[i].y);
+            }
         }
     }
 
@@ -410,6 +391,7 @@ void update(int value) {
             if (obstacles[i].y < -OBSTACLE_HEIGHT) {
                 obstacles[i].lane = rand() % NUM_LANES;
                 obstacles[i].y = SCREEN_HEIGHT;
+                obstacles[i].type = rand() % 2;
                 score++;
             }
         }
@@ -490,9 +472,9 @@ void init() {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(400, 600);
-    glutInitWindowPosition(450, 90);
-    glutCreateWindow("UES Algoritmos Graficos");
+    glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    glutInitWindowPosition(100, 50);
+    glutCreateWindow("UES Algoritmos Graficos - Los Chorro's Game");
     init();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
