@@ -83,7 +83,90 @@ void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
         glEnd();
     }
 }
+//ecuaci√≥n general
+void drawLineGeneralEquation(int x0, int y0, int x1, int y1, int color[]) {
+    int A = y1 - y0;
+    int B = x0 - x1;
+    int C = x1 * y0 - x0 * y1;
 
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+    for (int x = x0 < x1 ? x0 : x1; x <= (x0 > x1 ? x0 : x1); x++) {
+        for (int y = y0 < y1 ? y0 : y1; y <= (y0 > y1 ? y0 : y1); y++) {
+            if (A * x + B * y + C == 0)
+                glVertex2i(x, y);
+        }
+    }
+    glEnd();
+}
+//DDA
+void drawLineDDA(int x0, int y0, int x1, int y1, int color[]) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+    float xInc = dx / (float)steps;
+    float yInc = dy / (float)steps;
+
+    float x = x0;
+    float y = y0;
+
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+    for (int i = 0; i <= steps; i++) {
+        glVertex2i(round(x), round(y));
+        x += xInc;
+        y += yInc;
+    }
+    glEnd();
+}
+// C√≠rculo (algoritmo del punto medio)
+void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
+    int x = 0, y = r;
+    int p = 1 - r;
+
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+    while (x <= y) {
+        glVertex2i(xc + x, yc + y);
+        glVertex2i(xc - x, yc + y);
+        glVertex2i(xc + x, yc - y);
+        glVertex2i(xc - x, yc - y);
+        glVertex2i(xc + y, yc + x);
+        glVertex2i(xc - y, yc + x);
+        glVertex2i(xc + y, yc - x);
+        glVertex2i(xc - y, yc - x);
+        x++;
+        if (p < 0)
+            p += 2 * x + 1;
+        else {
+            y--;
+            p += 2 * (x - y) + 1;
+        }
+    }
+    glEnd();
+}
+// algoritmo por fronteras
+void setPixel(int x, int y) {
+    glVertex2i(x, y);
+}
+
+void getPixelColor(int x, int y, GLubyte* color) {
+    glReadPixels(x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, color);
+}
+
+void floodFill(int x, int y, GLubyte* fillColor, GLubyte* borderColor) {
+    GLubyte color[3];
+    getPixelColor(x, y, color);
+    if ((color[0] != borderColor[0] || color[1] != borderColor[1] || color[2] != borderColor[2]) &&
+        (color[0] != fillColor[0] || color[1] != fillColor[1] || color[2] != fillColor[2])) {
+        glColor3ub(fillColor[0], fillColor[1], fillColor[2]);
+        setPixel(x, y);
+        floodFill(x + 1, y, fillColor, borderColor);
+        floodFill(x - 1, y, fillColor, borderColor);
+        floodFill(x, y + 1, fillColor, borderColor);
+        floodFill(x, y - 1, fillColor, borderColor);
+    }
+}
 
 
 //DECORACIONES
@@ -176,16 +259,16 @@ void drawKiaSoul(float x, float y) {
 }
 
 void drawMicrobus(float x, float y) {
-    int bodyColor[] = { 139, 69, 19 };     // MarrÛn oscuro
+    int bodyColor[] = { 139, 69, 19 };     // MarrÔøΩn oscuro
     int cabinColor[] = { 255, 140, 0 };    // Naranja
     int windowColor[] = { 200, 200, 255 }; // Azul claro
     int wheelColor[] = { 20, 20, 20 };     // Gris oscuro
     int lightColor[] = { 255, 255, 0 };    // Amarillo
 
-    // Parte trasera del camiÛn (contenedor)
+    // Parte trasera del camiÔøΩn (contenedor)
     drawRect(x, y, 50, 100, bodyColor);
 
-    // Cabina del camiÛn
+    // Cabina del camiÔøΩn
     drawRect(x, y + 100, 50, 40, cabinColor);
     drawRect(x + 10, y + 110, 30, 20, windowColor);
 
@@ -201,8 +284,8 @@ void drawMicrobus(float x, float y) {
 
 
 void drawMoto(float x, float y) {
-    int bodyColor[] = { 205, 173, 0  };  // amarillo (cuerpo principal)
-    int seatColor[] = {20, 20, 20 };          // Gris muy oscuro(asiento)
+    int bodyColor[] = { 205, 173, 0 };  // amarillo (cuerpo principal)
+    int seatColor[] = { 20, 20, 20 };          // Gris muy oscuro(asiento)
     int handleColor[] = { 80, 80, 80 };    // Gris oscuro (manubrio)
     int wheelColor[] = { 80, 80, 80 };     // Gris oscuro(llantas)
 
@@ -229,7 +312,7 @@ void display() {
         glRasterPos2f(30, 800);
         char title[] = "LO CHORRO'S THE VIDEOGAME";
         for (char* c = title; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
-        
+
         glRasterPos2f(30, 650);
         char seleccion[] = "SELECIONA UN VEHICULO";
         for (char* c = seleccion; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
@@ -262,7 +345,7 @@ void display() {
         if (gameOver) {
             glColor3f(1.0, 0.2, 0.2);
             glRasterPos2f(230, 400);
-            char gameOverMsg[] = "°GAME OVER!";
+            char gameOverMsg[] = "ÔøΩGAME OVER!";
             for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
         }
 
@@ -272,7 +355,7 @@ void display() {
 
     //Dibujamos un cielo
     drawSky();
-    
+
 
     glColor3f(1.0f, 0.0f, 0.0f);
     for (int i = 1; i < NUM_LANES; ++i) {
@@ -297,11 +380,14 @@ void display() {
 
     if (selectedCar == 0) {
         drawKiaSoul(carX - 15, carY);
-    } else if (selectedCar == 1) {
+    }
+    else if (selectedCar == 1) {
         drawMicrobus(carX - 15, carY);
-    } else if (selectedCar == 3) {
+    }
+    else if (selectedCar == 3) {
         drawMoto(carX - 15, carY);
-    } else {
+    }
+    else {
         drawRect(carX, carY, CAR_WIDTH, CAR_HEIGHT, cars[selectedCar].color);
     }
 
