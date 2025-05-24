@@ -4,14 +4,15 @@
 #include <math.h>
 #include <stdio.h>
 
-#define SCREEN_WIDTH 412
-#define SCREEN_HEIGHT 915
+#define M_PI 3.14159265
+#define SCREEN_WIDTH 700
+#define SCREEN_HEIGHT 900 
 #define CAR_WIDTH 40
 #define CAR_HEIGHT 60
 #define OBSTACLE_WIDTH 40
 #define OBSTACLE_HEIGHT 40
-#define NUM_LANES 4
-#define NUM_OBSTACLES 5
+#define NUM_LANES 5
+#define NUM_OBSTACLES 6
 
 typedef struct {
     int lane;
@@ -41,6 +42,62 @@ int score = 0;
 int gameOver = 0;
 int showStartScreen = 1;
 int laneX[NUM_LANES];
+
+//ALGORITMOS
+
+//LINEA RECTA BRESENHAM
+void algoritmoBresenham(int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0), dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x0 != x1 || y0 != y1) {
+        glBegin(GL_POINTS);
+        glVertex2i(x0, y0);
+        glEnd();
+
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 < dx) { err += dx; y0 += sy; }
+    }
+}
+
+//Circulos Polares
+void circulosPolares(int cx, int cy, int r) {
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 360; i++) {
+        float theta = i * (M_PI / 180.0);
+        int x = cx + r * cos(theta);
+        int y = cy + r * sin(theta);
+        glVertex2i(x, y);
+    }
+    glEnd();
+}
+
+void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
+    glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
+    for (int y = yStart; y <= yStart + height; y++) {
+        glBegin(GL_LINES);
+        glVertex2f(xStart, y);
+        glVertex2f(xStart + width, y);
+        glEnd();
+    }
+}
+
+
+
+//DECORACIONES
+
+//Cielo
+void drawSky() {
+    glColor3f(0.52f, 0.8f, 0.98f);
+    algoritmoBresenham(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT - 100);
+    algoritmoBresenham(0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    int skyColor[] = { 135, 206, 250 }; // Celeste
+    scanLineFill(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100, skyColor);
+
+}
 
 void drawRect(float x, float y, float width, float height, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
@@ -118,6 +175,31 @@ void drawKiaSoul(float x, float y) {
     drawCircle(x + 20, y + 118, 4, 10, lightColor);
 }
 
+void drawMicrobus(float x, float y) {
+    int bodyColor[] = { 139, 69, 19 };     // Marrón oscuro
+    int cabinColor[] = { 255, 140, 0 };    // Naranja
+    int windowColor[] = { 200, 200, 255 }; // Azul claro
+    int wheelColor[] = { 20, 20, 20 };     // Gris oscuro
+    int lightColor[] = { 255, 255, 0 };    // Amarillo
+
+    // Parte trasera del camión (contenedor)
+    drawRect(x, y, 50, 100, bodyColor);
+
+    // Cabina del camión
+    drawRect(x, y + 100, 50, 40, cabinColor);
+    drawRect(x + 10, y + 110, 30, 20, windowColor);
+
+    // Ruedas
+    drawCircle(x - 5, y + 10, 10, 20, wheelColor);
+    drawCircle(x + 55, y + 10, 10, 20, wheelColor);
+    drawCircle(x - 5, y + 100, 10, 20, wheelColor);
+    drawCircle(x + 55, y + 100, 10, 20, wheelColor);
+
+    // Luces
+    drawCircle(x + 25, y + 138, 4, 10, lightColor);
+}
+
+
 void drawMoto(float x, float y) {
     int bodyColor[] = { 205, 173, 0  };  // amarillo (cuerpo principal)
     int seatColor[] = {20, 20, 20 };          // Gris muy oscuro(asiento)
@@ -135,7 +217,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (showStartScreen || gameOver) {
-        glColor3f(0.1f, 0.1f, 0.1f);
+        glColor3f(0.9f, 0.9f, 0.9f);
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
         glVertex2f(SCREEN_WIDTH, 0);
@@ -143,43 +225,59 @@ void display() {
         glVertex2f(0, SCREEN_HEIGHT);
         glEnd();
 
-        glColor3f(1.0, 1.0, 1.0);
+        glColor3f(0.2, 0.2, 1.0);
+        glRasterPos2f(30, 800);
+        char title[] = "LO CHORRO'S THE VIDEOGAME";
+        for (char* c = title; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+        
+        glRasterPos2f(30, 650);
+        char seleccion[] = "SELECIONA UN VEHICULO";
+        for (char* c = seleccion; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
 
-        glRasterPos2f(60, SCREEN_HEIGHT / 2 + 60);
-        char title[] = "Selecciona tu vehiculo:";
-        for (char* c = title; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        glColor3f(0.0, 0.0, 0.0);
+        glRasterPos2f(140, 750);
+        char instruccion1[] = "Presiona W/A/S/D para moverte";
+        for (char* c = instruccion1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(60, SCREEN_HEIGHT / 2 + 30);
-        char option1[] = "1 - Kia Soul";
+        glRasterPos2f(140, 710);
+        char instruccion2[] = "Presiona Espacio para saltar";
+        for (char* c = instruccion2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+
+        glRasterPos2f(80, 600);
+        char option1[] = "Presione 1:  /Kia Soul";
         for (char* c = option1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(60, SCREEN_HEIGHT / 2);
-        char option2[] = "2 - Micro bus UES";
+        glRasterPos2f(80, 550);
+        char option2[] = "Presione 2:  /Microbus R8";
         for (char* c = option2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(60, SCREEN_HEIGHT / 2 - 30);
-        char option3[] = "3 - Buseta del fas";
+        glRasterPos2f(80, 500);
+        char option3[] = "Presione 3:  /Buseta del FAS";
         for (char* c = option3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(60, SCREEN_HEIGHT / 2 - 60);
-        char option4[] = "4 - Motocicleta";
+        glRasterPos2f(80, 450);
+        char option4[] = "Presione 4:  /Motocicleta";
         for (char* c = option4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         if (gameOver) {
-            glColor3f(1.0, 0.0, 0.0);
-            glRasterPos2f(60, SCREEN_HEIGHT / 2 + 100);
-            char gameOverMsg[] = "GAME OVER!";
-            for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+            glColor3f(1.0, 0.2, 0.2);
+            glRasterPos2f(230, 400);
+            char gameOverMsg[] = "¡GAME OVER!";
+            for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
         }
 
         glutSwapBuffers();
         return;
     }
 
-    glColor3f(1.0, 1.0, 1.0);
+    //Dibujamos un cielo
+    drawSky();
+    
+
+    glColor3f(1.0f, 0.0f, 0.0f);
     for (int i = 1; i < NUM_LANES; ++i) {
         float x = i * (SCREEN_WIDTH / NUM_LANES);
-        for (int y = 0; y < SCREEN_HEIGHT; y += 40) {
+        for (int y = 0; y < SCREEN_HEIGHT - 100; y += 40) {
             glBegin(GL_LINES);
             glVertex2f(x, y);
             glVertex2f(x, y + 20);
@@ -189,7 +287,9 @@ void display() {
 
     int obstacleColor[] = { 255, 0, 0 };
     for (int i = 0; i < NUM_OBSTACLES; i++) {
-        drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
+        if (obstacles[i].y < SCREEN_HEIGHT - 100) { // Evita que pasen al cielo
+            drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
+        }
     }
 
     float carX = laneX[cars[selectedCar].lane] - CAR_WIDTH / 2;
@@ -197,6 +297,8 @@ void display() {
 
     if (selectedCar == 0) {
         drawKiaSoul(carX - 15, carY);
+    } else if (selectedCar == 1) {
+        drawMicrobus(carX - 15, carY);
     } else if (selectedCar == 3) {
         drawMoto(carX - 15, carY);
     } else {
@@ -207,7 +309,7 @@ void display() {
     glRasterPos2f(10, SCREEN_HEIGHT - 20);
     char scoreStr[50];
     sprintf(scoreStr, "Puntuacion: %d", score);
-    for (char* c = scoreStr; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
+    for (char* c = scoreStr; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
     glutSwapBuffers();
 }
@@ -295,13 +397,15 @@ void init() {
         laneX[i] = laneWidth * i + laneWidth / 2;
     }
 
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     generateObstacles();
 }
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(412, 675);
+    glutInitWindowSize(400, 600);
+    glutInitWindowPosition(450, 90);
     glutCreateWindow("UES Algoritmos Graficos");
     init();
     glutDisplayFunc(display);
