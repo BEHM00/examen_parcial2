@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 
+
 #define M_PI 3.14159265
 #define SCREEN_WIDTH 700
 #define SCREEN_HEIGHT 900 
@@ -11,8 +12,12 @@
 #define CAR_HEIGHT 60
 #define OBSTACLE_WIDTH 40
 #define OBSTACLE_HEIGHT 40
-#define NUM_LANES 5
+#define NUM_LANES 4
 #define NUM_OBSTACLES 6
+#define ROAD_LEFT_MARGIN (SCREEN_WIDTH/6)
+#define ROAD_RIGHT_MARGIN (SCREEN_WIDTH*5/6)
+#define ROAD_WIDTH (ROAD_RIGHT_MARGIN - ROAD_LEFT_MARGIN)
+#define LANE_WIDTH (ROAD_WIDTH/NUM_LANES)
 
 typedef struct {
     int lane;
@@ -323,7 +328,7 @@ void display() {
         if (gameOver) {
             glColor3f(1.0, 0.2, 0.2);
             glRasterPos2f(230, 400);
-            char gameOverMsg[] = "¡GAME OVER!";
+            char gameOverMsg[] = "�GAME OVER!";
             for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
         }
 
@@ -331,16 +336,41 @@ void display() {
         return;
     }
 
+    //Dibujamos un cielo
     drawSky();
+    // 1. Dibujar áreas verdes laterales (pasto)
+    int verde_pasto[] = { 34, 139, 34 };
+    scanLineFill(0, 0, SCREEN_WIDTH / 6, SCREEN_HEIGHT - 100, verde_pasto); // Lado izquierdo
+    scanLineFill(SCREEN_WIDTH * 5 / 6, 0, SCREEN_WIDTH / 6, SCREEN_HEIGHT - 100, verde_pasto); // Lado derecho
 
-    glColor3f(1.0f, 0.0f, 0.0f);
-    for (int i = 1; i < NUM_LANES; ++i) {
-        float x = i * (SCREEN_WIDTH / NUM_LANES);
-        for (int y = 0; y < SCREEN_HEIGHT - 100; y += 40) {
-            glBegin(GL_LINES);
-            glVertex2f(x, y);
-            glVertex2f(x, y + 20);
-            glEnd();
+    // 2. Dibujar asfalto (área gris principal)
+    int gris_asfalto[] = { 100, 100, 100 };
+    scanLineFill(SCREEN_WIDTH / 6, 0, SCREEN_WIDTH * 4 / 6, SCREEN_HEIGHT - 100, gris_asfalto);
+    // 4. Bordes de la carretera (patrón rojo-blanco)
+    int rojo[] = { 255, 0, 0 };
+    int blanco[] = { 255, 255, 255 };
+    for (int y = 0; y < SCREEN_HEIGHT - 100; y += 40) {
+        // Borde izquierdo (rojo-blanco)
+        scanLineFill(SCREEN_WIDTH / 6 - SCREEN_WIDTH / 24, y, SCREEN_WIDTH / 48, 20, rojo);
+        scanLineFill(SCREEN_WIDTH / 6 - SCREEN_WIDTH / 48, y, SCREEN_WIDTH / 48, 20, blanco);
+
+        // Borde derecho (blanco-rojo)
+        scanLineFill(SCREEN_WIDTH * 5 / 6, y, SCREEN_WIDTH / 48, 20, blanco);
+        scanLineFill(SCREEN_WIDTH * 5 / 6 + SCREEN_WIDTH / 48, y, SCREEN_WIDTH / 48, 20, rojo);
+    }
+    int amarillo[] = { 255, 255, 0 };
+    for (int i = 1; i < NUM_LANES; i++) {
+        int x = ROAD_LEFT_MARGIN + (i * LANE_WIDTH);
+        for (int y = 0; y < SCREEN_HEIGHT - 100; y += 30) {
+            // Usamos tu algoritmo de línea recta para las marcas viales
+            drawLineDDA(x, y, x, y + 15, amarillo);
+        }
+    }
+
+    int obstacleColor[] = { 255, 0, 0 };
+    for (int i = 0; i < NUM_OBSTACLES; i++) {
+        if (obstacles[i].y < SCREEN_HEIGHT - 100) { // Evita que pasen al cielo
+            drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
         }
     }
 
@@ -455,14 +485,15 @@ void keyboard(unsigned char key, int x, int y) {
     }
 }
 
+
 void init() {
     glMatrixMode(GL_PROJECTION);
     gluOrtho2D(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT);
     glMatrixMode(GL_MODELVIEW);
 
-    int laneWidth = SCREEN_WIDTH / NUM_LANES;
+    // Posiciones centrales de cada carril
     for (int i = 0; i < NUM_LANES; i++) {
-        laneX[i] = laneWidth * i + laneWidth / 2;
+        laneX[i] = ROAD_LEFT_MARGIN + (i * LANE_WIDTH) + (LANE_WIDTH / 2);
     }
 
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
