@@ -271,18 +271,69 @@ void drawMicrobus(float x, float y) {
     drawCircle(x + 25, y + 138, 4, 10, lightColor);
 }
 
-void drawMoto(float x, float y) {
-    int bodyColor[] = {205, 173, 0};  // amarillo
-    int seatColor[] = {20, 20, 20};   // Gris muy oscuro
-    int handleColor[] = {20, 20, 20}; // Gris oscuro
-    int wheelColor[] = {20, 20, 20};  // Gris oscuro
+void drawMoto(int x, int y) {
+    // MANUBRIO (más delgado)
+    glColor3ub(0, 0, 0);
+    algoritmoBresenham(x + 2, y + 120, x + 38, y + 120); // línea horizontal (manubrio)
 
-    drawRect(x + 10, y + 10, 20, 100, bodyColor);
-    drawRect(x + 10, y + 45, 20, 30, seatColor);
-    drawCircle(x + 20, y + 5, 8, 20, wheelColor);
-    drawCircle(x + 20, y + 115, 8, 20, wheelColor);
-    drawRect(x, y + 110, 40, 5, handleColor);
+    // RUEDA DELANTERA (superior)
+    for (int i = 0; i < 6; i++) {
+        algoritmoBresenham(x + 10, y + 114 + i, x + 30, y + 114 + i);
+    }
+
+    // CUERPO AMARILLO (tanque)
+    glColor3ub(205, 173, 0);
+    for (int i = 0; i < 16; i++) {
+        algoritmoBresenham(x + 14, y + 98 + i, x + 26, y + 98 + i);
+    }
+
+    // PARTE NEGRA CENTRAL (motor)
+    glColor3ub(0, 0, 0);
+    for (int i = 0; i < 20; i++) {
+        algoritmoBresenham(x + 14, y + 78 + i, x + 26, y + 78 + i);
+    }
+
+    // CUERPO ROJO (asiento o caja trasera)
+    glColor3ub(255, 0, 0);
+    for (int i = 0; i < 20; i++) {
+        algoritmoBresenham(x + 14, y + 58 + i, x + 26, y + 58 + i);
+    }
+
+    // COLA AMARILLA (parte baja trasera)
+    glColor3ub(205, 173, 0);
+    for (int i = 0; i < 8; i++) {
+        algoritmoBresenham(x + 14, y + 50 + i, x + 26, y + 50 + i);
+    }
+
+    // RUEDA TRASERA (más angosta)
+    glColor3ub(0, 0, 0);
+    for (int i = 0; i < 6; i++) {
+        algoritmoBresenham(x + 16, y + 44 + i, x + 24, y + 44 + i);
+    }
+
+    // LETRA 'D' (color negro) dentro de la caja roja
+    glColor3ub(255, 255, 255);
+
+    // Coordenadas base para letra 'D' dentro del área roja
+    int dX = x + 17; // posición horizontal centrada dentro del rojo
+    int dY = y + 60; // posición vertical inferior de la D
+
+    // Línea vertical izquierda
+    algoritmoBresenham(dX, dY, dX, dY + 16);
+
+    // Línea horizontal superior
+    algoritmoBresenham(dX, dY + 16, dX + 6, dY + 16);
+
+    // Línea horizontal inferior
+    algoritmoBresenham(dX, dY, dX + 6, dY);
+
+    // Línea vertical derecha (curva simulada)
+    algoritmoBresenham(dX + 6, dY + 1, dX + 6, dY + 15);
 }
+
+
+
+
 void drawCoaster(float x, float y) {
     int rojo[] = {255, 0, 0};
     int blanco[] = {255, 255, 255};
