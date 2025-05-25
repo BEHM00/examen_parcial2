@@ -6,8 +6,8 @@
 
 
 #define M_PI 3.14159265358979323846
-#define SCREEN_WIDTH 700
-#define SCREEN_HEIGHT 900 
+#define SCREEN_WIDTH 600
+#define SCREEN_HEIGHT 680
 #define CAR_WIDTH 40
 #define CAR_HEIGHT 60
 #define OBSTACLE_WIDTH 40
@@ -45,6 +45,7 @@ int isJumping = 0;
 float jumpTime = 0.0f;
 float initialY = 100.0f;
 int score = 0;
+int highScore = 0;
 int gameOver = 0;
 int showStartScreen = 1;
 int laneX[NUM_LANES];
@@ -218,6 +219,21 @@ int checkCollision() {
     return 0;
 }
 
+void specialKeyboard(int key, int x, int y) {
+    if (!showStartScreen && !gameOver) {
+        switch (key) {
+        case GLUT_KEY_LEFT: // Flecha izquierda
+            if (cars[selectedCar].lane > 0)
+                cars[selectedCar].lane--;
+            break;
+        case GLUT_KEY_RIGHT: // Flecha derecha
+            if (cars[selectedCar].lane < NUM_LANES - 1)
+                cars[selectedCar].lane++;
+            break;
+        }
+    }
+}
+
 // VEHÍCULOS
 
 void drawKiaSoul(float x, float y) {
@@ -322,45 +338,60 @@ void display() {
         glVertex2f(0, SCREEN_HEIGHT);
         glEnd();
 
+        glColor3f(0.0, 0.0, 0.0);
+        glPointSize(5);
+        algoritmoBresenham(50, SCREEN_HEIGHT - 20 , SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20);
+        algoritmoBresenham(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20, SCREEN_WIDTH - 50, SCREEN_HEIGHT - 250);
+        algoritmoBresenham(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 250);
+        algoritmoBresenham(50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 20);
+
         glColor3f(0.2, 0.2, 1.0);
-        glRasterPos2f(30, 800);
+        glRasterPos2f(120, 585);
         char title[] = "LO CHORRO'S THE VIDEOGAME";
         for (char* c = title; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
 
-        glRasterPos2f(30, 650);
+        glColor3f(0.0, 0.0, 0.0);
+        glRasterPos2f(180, 520);
+        char instruccion1[] = "Presiona <-- | --> para moverte";
+        for (char* c = instruccion1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+
+        glRasterPos2f(200, 490);
+        char instruccion2[] = "Presiona Espacio para saltar";
+        for (char* c = instruccion2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+
+        glColor3f(0.2, 0.2, 1.0);
+        glRasterPos2f(150, 275);
         char seleccion[] = "SELECIONA UN VEHICULO";
         for (char* c = seleccion; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
 
         glColor3f(0.0, 0.0, 0.0);
-        glRasterPos2f(140, 750);
-        char instruccion1[] = "Presiona W/A/S/D para moverte";
-        for (char* c = instruccion1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-
-        glRasterPos2f(140, 710);
-        char instruccion2[] = "Presiona Espacio para saltar";
-        for (char* c = instruccion2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
-
-        glRasterPos2f(80, 600);
-        char option1[] = "Presione 1:  /Kia Soul";
+        glRasterPos2f(150, 230);
+        char option1[] = "Presione 1:  /Motocicleta Delivery";
         for (char* c = option1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(80, 550);
-        char option2[] = "Presione 2:  /Microbus R8";
+        glRasterPos2f(150, 190);
+        char option2[] = "Presione 2:  /Carro Kia Soul";
         for (char* c = option2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(80, 500);
-        char option3[] = "Presione 3:  /Buseta del FAS";
+        glRasterPos2f(150, 150);
+        char option3[] = "Presione 3:  /Microbus Coaster";
         for (char* c = option3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(80, 450);
-        char option4[] = "Presione 4:  /Motocicleta";
+        glRasterPos2f(150, 110);
+        char option4[] = "Presione 4:  /Bus";
         for (char* c = option4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         if (gameOver) {
             glColor3f(1.0, 0.2, 0.2);
-            glRasterPos2f(230, 400);
-            char gameOverMsg[] = "�GAME OVER!";
+            glRasterPos2f(230, 380);
+            char gameOverMsg[] = "!GAME OVER!";
             for (char* c = gameOverMsg; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+
+            glColor3f(0.0, 0.0, 0.0);
+            glRasterPos2f(190, 340);
+            char highScoreStr[50];
+            sprintf(highScoreStr, "Puntuacion maxima: %d", highScore);
+            for (char* c = highScoreStr; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
         }
 
         glutSwapBuffers();
@@ -369,6 +400,8 @@ void display() {
 
     //Dibujamos un cielo
     drawSky();
+
+
     // 1. Dibujar áreas verdes laterales (pasto)
     int verde_pasto[] = { 34, 139, 34 };
     scanLineFill(0, 0, SCREEN_WIDTH / 6, SCREEN_HEIGHT - 100, verde_pasto); // Lado izquierdo
@@ -392,7 +425,7 @@ void display() {
     int amarillo[] = { 255, 255, 0 };
     for (int i = 1; i < NUM_LANES; i++) {
         int x = ROAD_LEFT_MARGIN + (i * LANE_WIDTH);
-        for (int y = 0; y < SCREEN_HEIGHT - 100; y += 30) {
+        for (int y = 0; y < SCREEN_HEIGHT - 105; y += 30) {
             // Usamos tu algoritmo de línea recta para las marcas viales
             drawLineDDA(x, y, x, y + 15, amarillo);
         }
@@ -400,13 +433,13 @@ void display() {
 
     int obstacleColor[] = { 255, 0, 0 };
     for (int i = 0; i < NUM_OBSTACLES; i++) {
-        if (obstacles[i].y < SCREEN_HEIGHT - 100) { // Evita que pasen al cielo
+        if (obstacles[i].y < SCREEN_HEIGHT - 110) { // Evita que pasen al cielo
             drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
         }
     }
 
     for (int i = 0; i < NUM_OBSTACLES; i++) {
-        if (obstacles[i].y < SCREEN_HEIGHT - 100) {
+        if (obstacles[i].y < SCREEN_HEIGHT - 110) {
             if (obstacles[i].type == 0) {
                 int obstacleColor[] = {255, 0, 0}; // Rojo para círculos
                 drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, 
@@ -421,23 +454,20 @@ void display() {
     float carY = cars[selectedCar].y;
 
     if (selectedCar == 0) {
-        drawKiaSoul(carX - 15, carY);
+        drawMoto(carX - 4, carY - 55);      
     }
     else if (selectedCar == 1) {
-        drawMicrobus(carX - 15, carY);
+        drawKiaSoul(carX - 3, carY - 55);
     }
     else if (selectedCar == 2) {
-        drawCoaster(carX - 15, carY);
+        drawMicrobus(carX - 4, carY - 55);
     }
     else if (selectedCar == 3) {
-        drawMoto(carX - 15, carY);
-    }
-    else {
-        drawRect(carX, carY, CAR_WIDTH, CAR_HEIGHT, cars[selectedCar].color);
+        drawCoaster(carX - 4, carY - 55);
     }
 
     glColor3f(1.0, 1.0, 1.0);
-    glRasterPos2f(10, SCREEN_HEIGHT - 20);
+    glRasterPos2f(15, SCREEN_HEIGHT - 90);
     char scoreStr[50];
     sprintf(scoreStr, "Puntuacion: %d", score);
     for (char* c = scoreStr; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
@@ -461,7 +491,12 @@ void update(int value) {
         }
 
         updateJump();
-        if (checkCollision()) gameOver = 1;
+        if (checkCollision()) {
+            gameOver = 1;
+            if (score > highScore) {
+                highScore = score;
+            }
+        }
     }
 
     glutPostRedisplay();
@@ -470,22 +505,6 @@ void update(int value) {
 
 void keyboard(unsigned char key, int x, int y) {
     switch (key) {
-    case 'w':
-        if (!showStartScreen && !gameOver)
-            cars[selectedCar].y += 125;
-        break;
-    case 's':
-        if (!showStartScreen && !gameOver)
-            cars[selectedCar].y -= 125;
-        break;
-    case 'a':
-        if (!showStartScreen && !gameOver && cars[selectedCar].lane > 0)
-            cars[selectedCar].lane--;
-        break;
-    case 'd':
-        if (!showStartScreen && !gameOver && cars[selectedCar].lane < NUM_LANES - 1)
-            cars[selectedCar].lane++;
-        break;
     case ' ':
         if (!showStartScreen && !gameOver && !isJumping) {
             isJumping = 1;
@@ -538,10 +557,11 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-    glutInitWindowPosition(100, 50);
+    glutInitWindowPosition(300, 20);
     glutCreateWindow("UES Algoritmos Graficos - Los Chorro's Game");
     init();
     glutDisplayFunc(display);
+    glutSpecialFunc(specialKeyboard);
     glutKeyboardFunc(keyboard);
     glutTimerFunc(0, update, 0);
     glutMainLoop();
