@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 
-#define M_PI 3.14159265
+#define M_PI 3.14159265358979323846
 #define SCREEN_WIDTH 700
 #define SCREEN_HEIGHT 900 
 #define CAR_WIDTH 40
@@ -267,7 +267,38 @@ void drawMoto(float x, float y) {
     drawCircle(x + 20, y + 115, 8, 20, wheelColor);
     drawRect(x, y + 110, 40, 5, handleColor);
 }
+void drawCoaster(float x, float y) {
+    int rojo[] = {255, 0, 0};
+    int blanco[] = {255, 255, 255};
+    int azul[] = {0, 0, 255};
+    int negro[] = {0, 0, 0};
 
+    // Cuerpo principal de la coaster (blanco)
+    drawRect(x, y, 40, 100, blanco); // cuerpo base blanco
+
+    // Franjas de color (azul inferior, roja superior)
+    drawRect(x, y + 10, 40, 10, azul);   // franja azul inferior
+    drawRect(x, y + 80, 40, 10, rojo);   // franja roja superior
+
+    // Ventanas (gris claro para más contraste con el blanco)
+    int grisClaro[] = {200, 200, 200};
+    drawRect(x + 5, y + 25, 30, 10, grisClaro);
+    drawRect(x + 5, y + 40, 30, 10, grisClaro);
+    drawRect(x + 5, y + 55, 30, 10, grisClaro);
+
+    // Parabrisas
+    drawRect(x + 5, y + 70, 30, 8, grisClaro);
+
+    // Llantas negras
+    drawCircle(x + 5, y + 5, 6, 20, negro);
+    drawCircle(x + 35, y + 5, 6, 20, negro);
+    drawCircle(x + 5, y + 95, 6, 20, negro);
+    drawCircle(x + 35, y + 95, 6, 20, negro);
+
+    // Luces frontales
+    drawCircle(x + 10, y + 98, 2, 10, blanco);
+    drawCircle(x + 30, y + 98, 2, 10, blanco);
+}
 // DIBUJAR ESCENA
 
 void drawSky() {
@@ -394,6 +425,9 @@ void display() {
     }
     else if (selectedCar == 1) {
         drawMicrobus(carX - 15, carY);
+    }
+    else if (selectedCar == 2) {
+        drawCoaster(carX - 15, carY);
     }
     else if (selectedCar == 3) {
         drawMoto(carX - 15, carY);
