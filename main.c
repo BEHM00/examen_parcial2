@@ -179,7 +179,21 @@ void drawObstacleRect(float x, float y) {
     int obstacleColor[] = {255, 165, 0}; // Naranja
     drawRect(x - OBSTACLE_WIDTH/2, y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleColor);
 }
+//DIBUJAR PAISAJE
+void drawTree(int x, int y) {
+    int tronco[] = {129, 62, 9 };  // Marrón
+    int copa[] = {38, 100, 17 };    // Verde oscuro
 
+    // Tronco (rectángulo)
+    scanLineFill(x - 4, y, 8, 20, tronco);
+
+    // Copa (círculo)
+    drawCircle(x, y + 20, 15, 20, copa);
+}
+void drawRock(int x, int y) {
+    int rockColor[] = {128, 128, 128}; // Gris
+    drawCircle(x, y, 10, 20, rockColor);
+}
 // FUNCIONES DEL JUEGO
 
 void updateJump() {
@@ -488,7 +502,16 @@ void display() {
             drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
         }
     }
+    //arboles y rocas
+    for (int y = 50; y < SCREEN_HEIGHT - 150; y += 100) {
+        // Lado izquierdo
+        drawTree(SCREEN_WIDTH / 12, y);
+        drawRock(SCREEN_WIDTH / 12 + 15, y + 25);
 
+        // Lado derecho
+        drawTree(SCREEN_WIDTH * 11 / 12, y + 30);
+        drawRock(SCREEN_WIDTH * 11 / 12 - 20, y);
+    }
     for (int i = 0; i < NUM_OBSTACLES; i++) {
         if (obstacles[i].y < SCREEN_HEIGHT - 110) {
             if (obstacles[i].type == 0) {
@@ -515,8 +538,7 @@ void display() {
     }
     else if (selectedCar == 3) {
         drawCoaster(carX - 4, carY - 55);
-    }
-
+    } 
     glColor3f(1.0, 1.0, 1.0);
     glRasterPos2f(15, SCREEN_HEIGHT - 90);
     char scoreStr[50];
