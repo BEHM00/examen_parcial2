@@ -49,6 +49,9 @@ int highScore = 0;
 int gameOver = 0;
 int showStartScreen = 1;
 int laneX[NUM_LANES];
+float lineOffset = 0.0f;
+float landscapeOffset = 0.0f;
+
 
 // ALGORITMOS DE DIBUJO
 
@@ -67,6 +70,7 @@ void algoritmoBresenham(int x0, int y0, int x1, int y1) {
         if (e2 < dx) { err += dx; y0 += sy; }
     }
 }
+
 
 void circulosPolares(int cx, int cy, int r) {
     glBegin(GL_POINTS);
@@ -175,23 +179,122 @@ void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
     glEnd();
 }
 
-void drawObstacleRect(float x, float y) {
-    int obstacleColor[] = {255, 165, 0}; // Naranja
-    drawRect(x - OBSTACLE_WIDTH/2, y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, obstacleColor);
+void drawContainer(float x, float y) {
+    // Dimensiones del contenedor (vertical)
+    int containerWidth = OBSTACLE_WIDTH;
+    int containerHeight = OBSTACLE_HEIGHT * 2;
+
+    // Color base del contenedor (azul industrial)
+    int containerColor[] = { 0, 71, 171 };
+    scanLineFill((int)(x - containerWidth / 2), (int)y, containerWidth, containerHeight, containerColor);
+
+    // Marcos metálicos (gris oscuro)
+    int frameColor[] = { 50, 50, 50 };
+    // Horizontales
+    drawLineDDA((int)(x - containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)y, frameColor);
+    drawLineDDA((int)(x - containerWidth / 2), (int)(y + containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + containerHeight / 3), frameColor);
+    drawLineDDA((int)(x - containerWidth / 2), (int)(y + 2 * containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + 2 * containerHeight / 3), frameColor);
+    drawLineDDA((int)(x - containerWidth / 2), (int)(y + containerHeight), (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
+    // Verticales
+    drawLineDDA((int)(x - containerWidth / 2), (int)y, (int)(x - containerWidth / 2), (int)(y + containerHeight), frameColor);
+    drawLineDDA((int)(x + containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
+
+    // Detalle de puertas (azul oscuro)
+    int doorColor[] = { 0, 50, 120 };
+    int doorWidth = containerWidth / 3;
+    scanLineFill((int)(x - doorWidth), (int)(y + containerHeight / 4), doorWidth, containerHeight / 2, doorColor);
+    scanLineFill((int)x, (int)(y + containerHeight / 4), doorWidth, containerHeight / 2, doorColor);
+}
+void drawObstacleRock(float x, float y) {
+    // Colores
+    int edgeColor[] = { 0, 0, 0 };         
+    int fillColor[] = { 160, 160, 160 };   
+    int highlightColor[] = { 190, 190, 190 }; 
+
+    // 1. Dibujar contorno irregular con algoritmo DDA
+    int vx[] = {
+        (int)(x - 30), (int)(x - 40), (int)(x - 35),
+        (int)(x - 45), (int)(x - 25), (int)(x),
+        (int)(x + 25), (int)(x + 35), (int)(x + 40),
+        (int)(x + 20), (int)(x + 10), (int)(x),
+        (int)(x - 10), (int)(x - 25)
+    };
+
+    int vy[] = {
+        (int)(y + 20), (int)(y + 40), (int)(y + 55),
+        (int)(y + 65), (int)(y + 70), (int)(y + 75),
+        (int)(y + 70), (int)(y + 60), (int)(y + 40),
+        (int)(y + 20), (int)(y + 10), (int)(y + 5),
+        (int)(y + 10), (int)(y + 15)
+    };
+    int numVertices = sizeof(vx) / sizeof(vx[0]);
+    for (int i = 0; i < numVertices; i++) {
+        int next = (i + 1) % numVertices;
+        drawLineDDA(vx[i], vy[i], vx[next], vy[next], edgeColor);
+    }
+    int minY = vy[0], maxY = vy[0];
+    for (int i = 1; i < numVertices; i++) {
+        if (vy[i] < minY) minY = vy[i];
+        if (vy[i] > maxY) maxY = vy[i];
+    }
+
+    for (int currentY = minY; currentY <= maxY; currentY++) {
+
+        int intersections[20];
+        int count = 0;
+
+        for (int i = 0; i < numVertices; i++) {
+            int next = (i + 1) % numVertices;
+            if ((vy[i] >= currentY && vy[next] < currentY) ||
+                (vy[i] < currentY && vy[next] >= currentY)) {
+                float intersectX = vx[i] + (float)(currentY - vy[i]) / (vy[next] - vy[i]) * (vx[next] - vx[i]);
+                intersections[count++] = (int)intersectX;
+            }
+        }
+
+
+        for (int i = 0; i < count - 1; i++) {
+            for (int j = i + 1; j < count; j++) {
+                if (intersections[i] > intersections[j]) {
+                    int temp = intersections[i];
+                    intersections[i] = intersections[j];
+                    intersections[j] = temp;
+                }
+            }
+        }
+
+
+        for (int i = 0; i < count; i += 2) {
+            if (i + 1 < count) {
+                drawLineDDA(intersections[i], currentY, intersections[i + 1], currentY, fillColor);
+            }
+        }
+    }
+
+    for (int i = 0; i < 5; i++) {
+        int startX = (int)(x - 20 + rand() % 40);
+        int startY = (int)(y + 20 + rand() % 40);
+        int endX = startX + (rand() % 15 - 7);
+        int endY = startY + (rand() % 15 - 7);
+
+
+        if (endX > x - 45 && endX < x + 40 && endY > y + 5 && endY < y + 75) {
+            drawLineDDA(startX, startY, endX, endY, highlightColor);
+        }
+    }
 }
 //DIBUJAR PAISAJE
 void drawTree(int x, int y) {
-    int tronco[] = {129, 62, 9 };  // Marrón
-    int copa[] = {38, 100, 17 };    // Verde oscuro
+    int tronco[] = { 129, 62, 9 };  
+    int copa[] = { 38, 100, 17 };    
 
-    // Tronco (rectángulo)
+
     scanLineFill(x - 4, y, 8, 20, tronco);
 
-    // Copa (círculo)
     drawCircle(x, y + 20, 15, 20, copa);
 }
 void drawRock(int x, int y) {
-    int rockColor[] = {128, 128, 128}; // Gris
+    int rockColor[] = { 128, 128, 128 }; 
     drawCircle(x, y, 10, 20, rockColor);
 }
 // FUNCIONES DEL JUEGO
@@ -251,10 +354,10 @@ void specialKeyboard(int key, int x, int y) {
 // VEHÍCULOS
 
 void drawKiaSoul(float x, float y) {
-    int bodyColor[] = {0, 0, 255};
-    int windowColor[] = {60, 60, 60};
-    int wheelColor[] = {0, 0, 0};
-    int lightColor[] = {255, 255, 0};
+    int bodyColor[] = { 0, 0, 255 };
+    int windowColor[] = { 60, 60, 60 };
+    int wheelColor[] = { 0, 0, 0 };
+    int lightColor[] = { 255, 255, 0 };
 
     drawRect(x, y, 40, 120, bodyColor);
     drawRect(x + 5, y + 90, 30, 25, bodyColor);
@@ -269,11 +372,11 @@ void drawKiaSoul(float x, float y) {
 }
 
 void drawMicrobus(float x, float y) {
-    int bodyColor[] = {139, 69, 19};     // Marrón oscuro
-    int cabinColor[] = {255, 140, 0};    // Naranja
-    int windowColor[] = {200, 200, 255}; // Azul claro
-    int wheelColor[] = {20, 20, 20};     // Gris oscuro
-    int lightColor[] = {255, 255, 0};    // Amarillo
+    int bodyColor[] = { 139, 69, 19 };     // Marrón oscuro
+    int cabinColor[] = { 255, 140, 0 };    // Naranja
+    int windowColor[] = { 200, 200, 255 }; // Azul claro
+    int wheelColor[] = { 20, 20, 20 };     // Gris oscuro
+    int lightColor[] = { 255, 255, 0 };    // Amarillo
 
     drawRect(x, y, 50, 100, bodyColor);
     drawRect(x, y + 100, 50, 40, cabinColor);
@@ -349,10 +452,10 @@ void drawMoto(int x, int y) {
 
 
 void drawCoaster(float x, float y) {
-    int rojo[] = {255, 0, 0};
-    int blanco[] = {255, 255, 255};
-    int azul[] = {0, 0, 255};
-    int negro[] = {0, 0, 0};
+    int rojo[] = { 255, 0, 0 };
+    int blanco[] = { 255, 255, 255 };
+    int azul[] = { 0, 0, 255 };
+    int negro[] = { 0, 0, 0 };
 
     // Cuerpo principal de la coaster (blanco)
     drawRect(x, y, 40, 100, blanco); // cuerpo base blanco
@@ -362,7 +465,7 @@ void drawCoaster(float x, float y) {
     drawRect(x, y + 80, 40, 10, rojo);   // franja roja superior
 
     // Ventanas (gris claro para más contraste con el blanco)
-    int grisClaro[] = {200, 200, 200};
+    int grisClaro[] = { 200, 200, 200 };
     drawRect(x + 5, y + 25, 30, 10, grisClaro);
     drawRect(x + 5, y + 40, 30, 10, grisClaro);
     drawRect(x + 5, y + 55, 30, 10, grisClaro);
@@ -387,7 +490,7 @@ void drawSky() {
     algoritmoBresenham(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT - 100);
     algoritmoBresenham(0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    int skyColor[] = {135, 206, 250}; // Celeste
+    int skyColor[] = { 135, 206, 250 }; // Celeste
     scanLineFill(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100, skyColor);
 }
 
@@ -405,7 +508,7 @@ void display() {
 
         glColor3f(0.0, 0.0, 0.0);
         glPointSize(5);
-        algoritmoBresenham(50, SCREEN_HEIGHT - 20 , SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20);
+        algoritmoBresenham(50, SCREEN_HEIGHT - 20, SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20);
         algoritmoBresenham(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 20, SCREEN_WIDTH - 50, SCREEN_HEIGHT - 250);
         algoritmoBresenham(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 250);
         algoritmoBresenham(50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 20);
@@ -490,20 +593,14 @@ void display() {
     int amarillo[] = { 255, 255, 0 };
     for (int i = 1; i < NUM_LANES; i++) {
         int x = ROAD_LEFT_MARGIN + (i * LANE_WIDTH);
-        for (int y = 0; y < SCREEN_HEIGHT - 105; y += 30) {
-            // Usamos tu algoritmo de línea recta para las marcas viales
+        for (int y = (int)lineOffset % 30; y < SCREEN_HEIGHT - 105; y += 30) {
             drawLineDDA(x, y, x, y + 15, amarillo);
         }
     }
 
-    int obstacleColor[] = { 255, 0, 0 };
-    for (int i = 0; i < NUM_OBSTACLES; i++) {
-        if (obstacles[i].y < SCREEN_HEIGHT - 110) { // Evita que pasen al cielo
-            drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, OBSTACLE_WIDTH / 2, 20, obstacleColor);
-        }
-    }
+
     //arboles y rocas
-    for (int y = 50; y < SCREEN_HEIGHT - 150; y += 100) {
+    for (int y = 50 + (int)landscapeOffset % 100; y < SCREEN_HEIGHT - 150; y += 100) {
         // Lado izquierdo
         drawTree(SCREEN_WIDTH / 12, y);
         drawRock(SCREEN_WIDTH / 12 + 15, y + 25);
@@ -514,21 +611,24 @@ void display() {
     }
     for (int i = 0; i < NUM_OBSTACLES; i++) {
         if (obstacles[i].y < SCREEN_HEIGHT - 110) {
+            float obsX = (float)laneX[obstacles[i].lane];
+            float obsY = (float)obstacles[i].y;
+
             if (obstacles[i].type == 0) {
-                int obstacleColor[] = {255, 0, 0}; // Rojo para círculos
-                drawCircle(laneX[obstacles[i].lane], obstacles[i].y + OBSTACLE_HEIGHT / 2, 
-                          OBSTACLE_WIDTH / 2, 20, obstacleColor);
-            } else {
-                drawObstacleRect(laneX[obstacles[i].lane], obstacles[i].y);
+                drawContainer(obsX, obsY);
+            }
+            else {
+                drawObstacleRock(obsX, obsY);
             }
         }
     }
+
 
     float carX = laneX[cars[selectedCar].lane] - CAR_WIDTH / 2;
     float carY = cars[selectedCar].y;
 
     if (selectedCar == 0) {
-        drawMoto(carX - 4, carY - 55);      
+        drawMoto(carX - 4, carY - 55);
     }
     else if (selectedCar == 1) {
         drawKiaSoul(carX - 3, carY - 55);
@@ -538,7 +638,7 @@ void display() {
     }
     else if (selectedCar == 3) {
         drawCoaster(carX - 4, carY - 55);
-    } 
+    }
     glColor3f(1.0, 1.0, 1.0);
     glRasterPos2f(15, SCREEN_HEIGHT - 90);
     char scoreStr[50];
@@ -550,9 +650,8 @@ void display() {
 
 void update(int value) {
     if (!gameOver && !showStartScreen) {
-        roadY -= 5;
-        if (roadY < -50) roadY = 0;
-
+        lineOffset -= 5.0f;
+        landscapeOffset -= 5.0f;
         for (int i = 0; i < NUM_OBSTACLES; i++) {
             obstacles[i].y -= 5;
             if (obstacles[i].y < -OBSTACLE_HEIGHT) {
@@ -571,7 +670,6 @@ void update(int value) {
             }
         }
     }
-
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
@@ -590,6 +688,8 @@ void keyboard(unsigned char key, int x, int y) {
     case '4':
         if (showStartScreen || gameOver) {
             selectedCar = key - '1';
+            lineOffset = 0.0f;
+            landscapeOffset = 0.0f;
             for (int i = 0; i < 4; i++) {
                 cars[i].y = 100;
             }
