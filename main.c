@@ -18,7 +18,15 @@
 #define ROAD_RIGHT_MARGIN (SCREEN_WIDTH*5/6)
 #define ROAD_WIDTH (ROAD_RIGHT_MARGIN - ROAD_LEFT_MARGIN)
 #define LANE_WIDTH (ROAD_WIDTH/NUM_LANES)
+#define NUM_ELEMENTOS 19  // Total: 9 por lado
 
+typedef struct {
+    float x;
+    float y;
+    int tipo; // 0 = nada, 1 = árbol, 2 = roca
+} ElementoDecorativo;
+
+ElementoDecorativo decorativos[NUM_ELEMENTOS];
 typedef struct {
     int lane;
     float y;
@@ -284,17 +292,44 @@ void drawObstacleRock(float x, float y) {
     }
 }
 //DIBUJAR PAISAJE
+void initDecorativos() {
+    int spacing = (SCREEN_HEIGHT - 150) / (NUM_ELEMENTOS / 2);
+
+    for (int i = 0; i < NUM_ELEMENTOS / 2; i++) {
+        // Lado izquierdo
+        decorativos[i].x = SCREEN_WIDTH / 12;
+        decorativos[i].y = 50 + i * spacing;
+        decorativos[i].tipo = rand() % 3; // 0=nada, 1=árbol, 2=roca
+    }
+
+    for (int i = NUM_ELEMENTOS / 2; i < NUM_ELEMENTOS; i++) {
+        // Lado derecho
+        decorativos[i].x = SCREEN_WIDTH * 11 / 12;
+        decorativos[i].y = 50 + (i - NUM_ELEMENTOS / 2) * spacing + 30;
+        decorativos[i].tipo = rand() % 3;
+    }
+}
+void updateDecorativos() {
+    for (int i = 0; i < NUM_ELEMENTOS; i++) {
+        decorativos[i].y -= 5;
+        if (decorativos[i].y < -50) {
+            decorativos[i].y = SCREEN_HEIGHT - 100;
+            decorativos[i].tipo = rand() % 3; // nuevo tipo aleatorio
+        }
+    }
+}
 void drawTree(int x, int y) {
-    int tronco[] = { 129, 62, 9 };  
-    int copa[] = { 38, 100, 17 };    
+    int tronco[] = {129, 62, 9 };  // Marrón
+    int copa[] = {38, 100, 17 };    // Verde oscuro
 
-
+    // Tronco (rectángulo)
     scanLineFill(x - 4, y, 8, 20, tronco);
 
+    // Copa (círculo)
     drawCircle(x, y + 20, 15, 20, copa);
 }
 void drawRock(int x, int y) {
-    int rockColor[] = { 128, 128, 128 }; 
+    int rockColor[] = {128, 128, 128}; // Gris
     drawCircle(x, y, 10, 20, rockColor);
 }
 // FUNCIONES DEL JUEGO
@@ -600,15 +635,14 @@ void display() {
 
 
     //arboles y rocas
-    for (int y = 50 + (int)landscapeOffset % 100; y < SCREEN_HEIGHT - 150; y += 100) {
-        // Lado izquierdo
-        drawTree(SCREEN_WIDTH / 12, y);
-        drawRock(SCREEN_WIDTH / 12 + 15, y + 25);
-
-        // Lado derecho
-        drawTree(SCREEN_WIDTH * 11 / 12, y + 30);
-        drawRock(SCREEN_WIDTH * 11 / 12 - 20, y);
+    for (int i = 0; i < NUM_ELEMENTOS; i++) {
+        if (decorativos[i].tipo == 1) {
+            drawTree((int)decorativos[i].x, (int)decorativos[i].y);
+        } else if (decorativos[i].tipo == 2) {
+            drawRock((int)decorativos[i].x, (int)decorativos[i].y);
+        }
     }
+
     for (int i = 0; i < NUM_OBSTACLES; i++) {
         if (obstacles[i].y < SCREEN_HEIGHT - 110) {
             float obsX = (float)laneX[obstacles[i].lane];
@@ -652,6 +686,7 @@ void update(int value) {
     if (!gameOver && !showStartScreen) {
         lineOffset -= 5.0f;
         landscapeOffset -= 5.0f;
+        updateDecorativos();
         for (int i = 0; i < NUM_OBSTACLES; i++) {
             obstacles[i].y -= 5;
             if (obstacles[i].y < -OBSTACLE_HEIGHT) {
@@ -724,6 +759,7 @@ void init() {
 
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     generateObstacles();
+    initDecorativos();
 }
 
 int main(int argc, char** argv) {
