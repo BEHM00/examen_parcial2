@@ -601,36 +601,160 @@ void drawMoto(int x, int y) {
 }
 
 void drawCoaster(float x, float y) {
-    int rojo[] = { 255, 0, 0 };
-    int blanco[] = { 255, 255, 255 };
-    int azul[] = { 0, 0, 255 };
-    int negro[] = { 0, 0, 0 };
+    float ancho = 40;
+    float alto = 100;
+    int radio = 8;
 
-    // Cuerpo principal de la coaster (blanco)
-    drawRect(x, y, 40, 100, blanco); // cuerpo base blanco
+    // Colores definidos como arrays
+    int blanco[] = {240, 240, 240};
+    int azulIntenso[] = {0, 100, 200};
+    int azulClaro[] = {0, 150, 255};
+    int azulLED[] = {0, 200, 255};
+    int ventana[] = {30, 30, 60};
+    int amarillo[] = {255, 255, 0};
+    int amarilloSuave[] = {255, 255, 150};
+    int rojo[] = {255, 0, 0};
+    int rojoSuave[] = {255, 100, 100};
 
-    // Franjas de color (azul inferior, roja superior)
-    drawRect(x, y + 10, 40, 10, azul);   // franja azul inferior
-    drawRect(x, y + 80, 40, 10, rojo);   // franja roja superior
+    // === CUERPO PRINCIPAL USANDO SCANLINEFILL ===
+    // Área central (evitando esquinas)
+    scanLineFill((int)x, (int)(y + radio), (int)ancho, (int)(alto - 2*radio), blanco);
+    
+    // Áreas superior e inferior (sin esquinas extremas)
+    scanLineFill((int)(x + radio), (int)y, (int)(ancho - 2*radio), radio, blanco);
+    scanLineFill((int)(x + radio), (int)(y + alto - radio), (int)(ancho - 2*radio), radio, blanco);
 
-    // Ventanas (gris claro para más contraste con el blanco)
-    int grisClaro[] = { 200, 200, 200 };
-    drawRect(x + 5, y + 25, 30, 10, grisClaro);
-    drawRect(x + 5, y + 40, 30, 10, grisClaro);
-    drawRect(x + 5, y + 55, 30, 10, grisClaro);
+    // === ESQUINAS REDONDEADAS USANDO CIRCULOSPOLARES ===
+    glColor3ub(blanco[0], blanco[1], blanco[2]);
+    
+    // Rellenar esquinas con círculos concéntricos
+    for (int r = 0; r <= radio; r++) {
+        // Esquina inferior izquierda (cuarto de círculo)
+        glBegin(GL_POINTS);
+        for (int angle = 180; angle <= 270; angle++) {
+            float theta = angle * (M_PI / 180.0);
+            int px = (int)(x + radio + r * cos(theta));
+            int py = (int)(y + radio + r * sin(theta));
+            if (px >= x && px <= x + radio && py >= y && py <= y + radio) {
+                glVertex2i(px, py);
+            }
+        }
+        glEnd();
+        
+        // Esquina inferior derecha
+        glBegin(GL_POINTS);
+        for (int angle = 270; angle <= 360; angle++) {
+            float theta = angle * (M_PI / 180.0);
+            int px = (int)(x + ancho - radio + r * cos(theta));
+            int py = (int)(y + radio + r * sin(theta));
+            if (px >= x + ancho - radio && px <= x + ancho && py >= y && py <= y + radio) {
+                glVertex2i(px, py);
+            }
+        }
+        glEnd();
+        
+        // Esquina superior izquierda
+        glBegin(GL_POINTS);
+        for (int angle = 90; angle <= 180; angle++) {
+            float theta = angle * (M_PI / 180.0);
+            int px = (int)(x + radio + r * cos(theta));
+            int py = (int)(y + alto - radio + r * sin(theta));
+            if (px >= x && px <= x + radio && py >= y + alto - radio && py <= y + alto) {
+                glVertex2i(px, py);
+            }
+        }
+        glEnd();
+        
+        // Esquina superior derecha
+        glBegin(GL_POINTS);
+        for (int angle = 0; angle <= 90; angle++) {
+            float theta = angle * (M_PI / 180.0);
+            int px = (int)(x + ancho - radio + r * cos(theta));
+            int py = (int)(y + alto - radio + r * sin(theta));
+            if (px >= x + ancho - radio && px <= x + ancho && py >= y + alto - radio && py <= y + alto) {
+                glVertex2i(px, py);
+            }
+        }
+        glEnd();
+    }
 
-    // Parabrisas
-    drawRect(x + 5, y + 70, 30, 8, grisClaro);
+    // === FRANJAS DECORATIVAS USANDO SCANLINEFILL ===
+    // Franja azul principal (inferior)
+    scanLineFill((int)(x + 5), (int)(y + 8), (int)(ancho - 10), 15, azulIntenso);
+    
+    // Franja azul secundaria (superior)
+    scanLineFill((int)(x + 8), (int)(y + 75), (int)(ancho - 16), 8, azulClaro);
 
-    // Llantas negras
-    drawCircle(x + 5, y + 5, 6, 20, negro);
-    drawCircle(x + 35, y + 5, 6, 20, negro);
-    drawCircle(x + 5, y + 95, 6, 20, negro);
-    drawCircle(x + 35, y + 95, 6, 20, negro);
+    // === VENTANAS USANDO SCANLINEFILL ===
+    // Ventana principal
+    scanLineFill((int)(x + 6), (int)(y + 50), (int)(ancho - 12), 12, ventana);
+    
+    // Ventana superior
+    scanLineFill((int)(x + 8), (int)(y + 85), (int)(ancho - 16), 8, ventana);
 
-    // Luces frontales
-    drawCircle(x + 10, y + 98, 2, 10, blanco);
-    drawCircle(x + 30, y + 98, 2, 10, blanco);
+    // === MARCOS DE VENTANAS USANDO DRAWLINEDDA ===
+    drawLineDDA((int)(x + 6), (int)(y + 50), (int)(x + ancho - 6), (int)(y + 50), azulLED);
+    drawLineDDA((int)(x + 6), (int)(y + 62), (int)(x + ancho - 6), (int)(y + 62), azulLED);
+    drawLineDDA((int)(x + 8), (int)(y + 85), (int)(x + ancho - 8), (int)(y + 85), azulLED);
+    drawLineDDA((int)(x + 8), (int)(y + 93), (int)(x + ancho - 8), (int)(y + 93), azulLED);
+
+    // === CONTORNO LED USANDO DRAWLINEDDA ===
+    // Contorno horizontal
+    drawLineDDA((int)(x + radio), (int)(y - 1), (int)(x + ancho - radio), (int)(y - 1), azulLED);
+    drawLineDDA((int)(x + radio), (int)(y - 2), (int)(x + ancho - radio), (int)(y - 2), azulLED);
+    drawLineDDA((int)(x + radio), (int)(y + alto + 1), (int)(x + ancho - radio), (int)(y + alto + 1), azulLED);
+    drawLineDDA((int)(x + radio), (int)(y + alto + 2), (int)(x + ancho - radio), (int)(y + alto + 2), azulLED);
+    
+    // Contorno vertical
+    drawLineDDA((int)(x - 1), (int)(y + radio), (int)(x - 1), (int)(y + alto - radio), azulLED);
+    drawLineDDA((int)(x - 2), (int)(y + radio), (int)(x - 2), (int)(y + alto - radio), azulLED);
+    drawLineDDA((int)(x + ancho + 1), (int)(y + radio), (int)(x + ancho + 1), (int)(y + alto - radio), azulLED);
+    drawLineDDA((int)(x + ancho + 2), (int)(y + radio), (int)(x + ancho + 2), (int)(y + alto - radio), azulLED);
+
+    // === ESQUINAS LED USANDO CIRCULOSPOLARES ===
+    glColor3ub(azulLED[0], azulLED[1], azulLED[2]);
+    
+    // Contorno LED de las esquinas redondeadas
+    circulosPolares((int)(x + radio), (int)(y + radio), radio + 1);
+    circulosPolares((int)(x + ancho - radio), (int)(y + radio), radio + 1);
+    circulosPolares((int)(x + radio), (int)(y + alto - radio), radio + 1);
+    circulosPolares((int)(x + ancho - radio), (int)(y + alto - radio), radio + 1);
+    
+    circulosPolares((int)(x + radio), (int)(y + radio), radio + 2);
+    circulosPolares((int)(x + ancho - radio), (int)(y + radio), radio + 2);
+    circulosPolares((int)(x + radio), (int)(y + alto - radio), radio + 2);
+    circulosPolares((int)(x + ancho - radio), (int)(y + alto - radio), radio + 2);
+
+    // === LUCES FRONTALES AMARILLAS USANDO CIRCULORELLENO ===
+    glColor3ub(amarillo[0], amarillo[1], amarillo[2]);
+    circuloRelleno((int)(x + 8), (int)(y + alto + 3), 4);
+    circuloRelleno((int)(x + ancho - 8), (int)(y + alto + 3), 4);
+    
+    // Efecto de brillo usando circulosPolares
+    glColor3ub(amarilloSuave[0], amarilloSuave[1], amarilloSuave[2]);
+    circulosPolares((int)(x + 8), (int)(y + alto + 3), 6);
+    circulosPolares((int)(x + ancho - 8), (int)(y + alto + 3), 6);
+
+    // === LUCES TRASERAS ROJAS USANDO CIRCULORELLENO ===
+    glColor3ub(rojo[0], rojo[1], rojo[2]);
+    circuloRelleno((int)(x + 8), (int)(y - 3), 4);
+    circuloRelleno((int)(x + ancho - 8), (int)(y - 3), 4);
+    
+    // Efecto de brillo usando circulosPolares
+    glColor3ub(rojoSuave[0], rojoSuave[1], rojoSuave[2]);
+    circulosPolares((int)(x + 8), (int)(y - 3), 6);
+    circulosPolares((int)(x + ancho - 8), (int)(y - 3), 6);
+
+    // === DETALLES DECORATIVOS ===
+    // Línea decorativa central usando drawLineDDA
+    drawLineDDA((int)(x + 10), (int)(y + 35), (int)(x + ancho - 10), (int)(y + 35), azulLED);
+    
+    // Puntos LED decorativos usando circulosPolares
+    glColor3ub(azulLED[0], azulLED[1], azulLED[2]);
+    for (int i = 0; i < 3; i++) {
+        circulosPolares((int)(x + 3), (int)(y + 25 + i * 20), 1);
+        circulosPolares((int)(x + ancho - 3), (int)(y + 25 + i * 20), 1);
+    }
 }
 // DIBUJAR ESCENA
 
@@ -681,42 +805,64 @@ void display() {
         algoritmoBresenham(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 250);
         algoritmoBresenham(50, SCREEN_HEIGHT - 250, 50, SCREEN_HEIGHT - 20);
 
+        // === TÍTULO PRINCIPAL CORREGIDO ===
         glColor3f(0.2, 0.2, 1.0);
         glRasterPos2f(120, 585);
-        char title[] = "LO CHORRO'S THE VIDEOGAME";
+        char title[] = "LOS CHORROS THE VIDEOGAME";
         for (char* c = title; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
 
+        // === NOMBRES DEL EQUIPO (AJUSTADOS AL CUADRADO) ===
+        glColor3f(0.0, 0.6, 0.0); // Verde oscuro para los nombres
+        glRasterPos2f(60, 550);
+        char team1[] = "Gustavo Guerra - GG18007";
+        for (char* c = team1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        
+        glRasterPos2f(300, 550);
+        char team2[] = "Bryan Hernandez - HM19001";
+        for (char* c = team2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        
+        glRasterPos2f(60, 530);
+        char team3[] = "Jose Rodriguez - RB20035";
+        for (char* c = team3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        
+        glRasterPos2f(300, 530);
+        char team4[] = "Diego Vasquez - VM21032";
+        for (char* c = team4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+
+        // === INSTRUCCIONES ===
         glColor3f(0.0, 0.0, 0.0);
-        glRasterPos2f(180, 520);
+        glRasterPos2f(180, 490);
         char instruccion1[] = "Presiona <-- | --> para moverte";
         for (char* c = instruccion1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
-        glRasterPos2f(200, 490);
+        glRasterPos2f(200, 460);
         char instruccion2[] = "Presiona Espacio para saltar";
         for (char* c = instruccion2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
+        // === SELECCIÓN DE VEHÍCULO (POSICIÓN ORIGINAL) ===
         glColor3f(0.2, 0.2, 1.0);
         glRasterPos2f(150, 275);
-        char seleccion[] = "SELECIONA UN VEHICULO";
+        char seleccion[] = "SELECCIONA UN VEHICULO";
         for (char* c = seleccion; *c; c++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
 
         glColor3f(0.0, 0.0, 0.0);
         glRasterPos2f(150, 230);
-        char option1[] = "Presione 1:  /Motocicleta Delivery";
+        char option1[] = "Presione 1: Motocicleta Delivery";
         for (char* c = option1; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         glRasterPos2f(150, 190);
-        char option2[] = "Presione 2:  /Carro Kia Soul";
+        char option2[] = "Presione 2: Carro Kia Soul";
         for (char* c = option2; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         glRasterPos2f(150, 150);
-        char option3[] = "Presione 3:  /Microbus Coaster";
+        char option3[] = "Presione 3: Microbus Coaster";
         for (char* c = option3; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
         glRasterPos2f(150, 110);
-        char option4[] = "Presione 4:  /Bus";
+        char option4[] = "Presione 4: Bus";
         for (char* c = option4; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
 
+        // === PANTALLA DE GAME OVER ===
         if (gameOver) {
             glColor3f(1.0, 0.2, 0.2);
             glRasterPos2f(230, 380);
@@ -740,7 +886,6 @@ void display() {
     dibujarNubes(nubeX1, SCREEN_HEIGHT - 37, 0.8);
     dibujarNubes(nubeX2, SCREEN_HEIGHT - 67, 0.8);
 
-
     // 1. Dibujar áreas verdes laterales (pasto)
     int verde_pasto[] = { 34, 139, 34 };
     scanLineFill(0, 0, SCREEN_WIDTH / 6, SCREEN_HEIGHT - 100, verde_pasto); // Lado izquierdo
@@ -749,6 +894,7 @@ void display() {
     // 2. Dibujar asfalto (área gris principal)
     int gris_asfalto[] = { 100, 100, 100 };
     scanLineFill(SCREEN_WIDTH / 6, 0, SCREEN_WIDTH * 4 / 6, SCREEN_HEIGHT - 100, gris_asfalto);
+    
     // 4. Bordes de la carretera (patrón rojo-blanco)
     int rojo[] = { 255, 0, 0 };
     int blanco[] = { 255, 255, 255 };
@@ -761,6 +907,7 @@ void display() {
         scanLineFill(SCREEN_WIDTH * 5 / 6, y, SCREEN_WIDTH / 48, 20, blanco);
         scanLineFill(SCREEN_WIDTH * 5 / 6 + SCREEN_WIDTH / 48, y, SCREEN_WIDTH / 48, 20, rojo);
     }
+    
     int amarillo[] = { 255, 255, 0 };
     for (int i = 1; i < NUM_LANES; i++) {
         int x = ROAD_LEFT_MARGIN + (i * LANE_WIDTH);
@@ -768,7 +915,6 @@ void display() {
             drawLineDDA(x, y, x, y + 15, amarillo);
         }
     }
-
 
     //arboles y rocas
     for (int i = 0; i < NUM_ELEMENTOS; i++) {
@@ -792,7 +938,6 @@ void display() {
             }
         }
     }
-
 
     float carX = laneX[cars[selectedCar].lane] - CAR_WIDTH / 2;
     float carY = cars[selectedCar].y;
