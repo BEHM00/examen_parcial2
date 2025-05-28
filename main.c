@@ -183,7 +183,6 @@ void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
     }
     glEnd();
 }
-
 // FUNCIONES DE DIBUJO DE OBJETOS
 
 void drawRect(float x, float y, float width, float height, int color[3]) {
@@ -207,6 +206,7 @@ void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
     }
     glEnd();
 }
+
 
 void drawContainer(float x, float y) {
     // Dimensiones del contenedor (vertical)
@@ -409,25 +409,69 @@ void specialKeyboard(int key, int x, int y) {
     }
 }
 
+void drawLineBresenham(int x0, int y0, int x1, int y1, int color[3]) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+
+    while (1) {
+        glVertex2i(x0, y0);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+
+    glEnd();
+}
+
 // VEHÍCULOS
 
 void drawKiaSoul(float x, float y) {
-    int bodyColor[] = { 0, 0, 255 };
-    int windowColor[] = { 60, 60, 60 };
-    int wheelColor[] = { 0, 0, 0 };
-    int lightColor[] = { 255, 255, 0 };
+    float scale = 0.8f;
+    int fillColor[] = { 50, 200, 50 };     // Verde claro para el relleno
+    int outlineColor[] = { 0, 0, 0 };      // Negro para los bordes
+    int windowColor[] = { 100, 100, 255 }; // Azul claro para ventanas
+    int frontLightColor[] = { 255, 255, 0 }; // Amarillo para faros delanteros (abajo)
+    int rearLightColor[] = { 255, 0, 0 };   // Rojo para faros traseros (arriba)
 
-    drawRect(x, y, 40, 120, bodyColor);
-    drawRect(x + 5, y + 90, 30, 25, bodyColor);
-    drawRect(x + 10, y + 95, 20, 15, windowColor);
-    drawRect(x + 10, y + 65, 20, 15, windowColor);
-    drawRect(x + 10, y + 35, 20, 15, windowColor);
-    drawCircle(x - 5, y + 20, 10, 20, wheelColor);
-    drawCircle(x + 45, y + 20, 10, 20, wheelColor);
-    drawCircle(x - 5, y + 100, 10, 20, wheelColor);
-    drawCircle(x + 45, y + 100, 10, 20, wheelColor);
-    drawCircle(x + 20, y + 118, 4, 10, lightColor);
+    // Ajustar posición para centrado
+    float offsetX = x - (0 * scale) / 2;
+    float offsetY = y;
+
+    // Dibujar relleno del cuerpo principal (verde)
+    scanLineFill(offsetX, offsetY + 5 * scale, 40 * scale, 110 * scale, fillColor);
+
+    // Dibujar relleno de la parte superior (verde)
+    scanLineFill(offsetX + 5 * scale, offsetY + 110 * scale, 30 * scale, 5 * scale, fillColor);
+
+    // Dibujar ventanas (azul claro)
+    scanLineFill(offsetX + 10 * scale, offsetY + 95 * scale, 20 * scale, 15 * scale, windowColor);
+    scanLineFill(offsetX + 10 * scale, offsetY + 65 * scale, 20 * scale, 15 * scale, windowColor);
+    scanLineFill(offsetX + 10 * scale, offsetY + 35 * scale, 20 * scale, 15 * scale, windowColor);
+
+    // Dibujar bordes del cuerpo (negros)
+    drawLineBresenham(offsetX, offsetY + 10 * scale, offsetX, offsetY + 110 * scale, outlineColor);
+    drawLineBresenham(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 40 * scale, offsetY + 110 * scale, outlineColor);
+    drawLineBresenham(offsetX, offsetY + 110 * scale, offsetX + 5 * scale, offsetY + 115 * scale, outlineColor);
+    drawLineBresenham(offsetX + 40 * scale, offsetY + 110 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
+    drawLineBresenham(offsetX + 5 * scale, offsetY + 115 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
+    drawLineBresenham(offsetX, offsetY + 10 * scale, offsetX + 5 * scale, offsetY + 5 * scale, outlineColor);
+    drawLineBresenham(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
+    drawLineBresenham(offsetX + 5 * scale, offsetY + 5 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
+
+    // Faros TRASEROS (rojos) - PARTE SUPERIOR
+    drawCircleMidpoint(offsetX + 5 * scale, offsetY + 115 * scale, 3 * scale, frontLightColor);  // Izquierdo
+    drawCircleMidpoint(offsetX + 35 * scale, offsetY + 115 * scale, 3 * scale,frontLightColor); // Derecho
+
+    // Faros DELANTEROS (amarillos) - PARTE INFERIOR
+    drawCircleMidpoint(offsetX + 5 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor);  // Izquierdo
+    drawCircleMidpoint(offsetX + 35 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor); // Derecho
 }
+
 
 void dibujarBus(float x, float y) {
     
