@@ -81,6 +81,44 @@ void algoritmoBresenham(int x0, int y0, int x1, int y1) {
     }
 }
 
+void bresenhamModificado(int x0, int y0, int x1, int y1, int color[3]) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+
+    while (1) {
+        glVertex2i(x0, y0);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+
+    glEnd();
+}
+
+void algoritmoDDA(int x0, int y0, int x1, int y1, int color[]) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+    float xInc = dx / (float)steps;
+    float yInc = dy / (float)steps;
+
+    float x = x0;
+    float y = y0;
+
+    glColor3ub(color[0], color[1], color[2]);
+    glBegin(GL_POINTS);
+    for (int i = 0; i <= steps; i++) {
+        glVertex2i(round(x), round(y));
+        x += xInc;
+        y += yInc;
+    }
+    glEnd();
+}
 
 void circulosPolares(int cx, int cy, int r) {
     glBegin(GL_POINTS);
@@ -106,59 +144,14 @@ void algoritmoSemicirculo(int xc, int yc, int r) {
     glEnd();
 }
 
-void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
-    glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
-    for (int y = yStart; y <= yStart + height; y++) {
-        glBegin(GL_LINES);
-        glVertex2f(xStart, y);
-        glVertex2f(xStart + width, y);
-        glEnd();
-    }
-}
-
 void circuloRelleno(int cx, int cy, int radius) {
     for (int r = 0; r <= radius; r++) {
         circulosPolares(cx, cy, r);
     }
 }
 
-void drawLineGeneralEquation(int x0, int y0, int x1, int y1, int color[]) {
-    int A = y1 - y0;
-    int B = x0 - x1;
-    int C = x1 * y0 - x0 * y1;
 
-    glColor3ub(color[0], color[1], color[2]);
-    glBegin(GL_POINTS);
-    for (int x = x0 < x1 ? x0 : x1; x <= (x0 > x1 ? x0 : x1); x++) {
-        for (int y = y0 < y1 ? y0 : y1; y <= (y0 > y1 ? y0 : y1); y++) {
-            if (A * x + B * y + C == 0)
-                glVertex2i(x, y);
-        }
-    }
-    glEnd();
-}
-
-void drawLineDDA(int x0, int y0, int x1, int y1, int color[]) {
-    int dx = x1 - x0;
-    int dy = y1 - y0;
-    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
-    float xInc = dx / (float)steps;
-    float yInc = dy / (float)steps;
-
-    float x = x0;
-    float y = y0;
-
-    glColor3ub(color[0], color[1], color[2]);
-    glBegin(GL_POINTS);
-    for (int i = 0; i <= steps; i++) {
-        glVertex2i(round(x), round(y));
-        x += xInc;
-        y += yInc;
-    }
-    glEnd();
-}
-
-void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
+void circuloMedio(int xc, int yc, int r, int color[]) {
     int x = 0, y = r;
     int p = 1 - r;
 
@@ -183,6 +176,17 @@ void drawCircleMidpoint(int xc, int yc, int r, int color[]) {
     }
     glEnd();
 }
+
+void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
+    glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
+    for (int y = yStart; y <= yStart + height; y++) {
+        glBegin(GL_LINES);
+        glVertex2f(xStart, y);
+        glVertex2f(xStart + width, y);
+        glEnd();
+    }
+}
+
 // FUNCIONES DE DIBUJO DE OBJETOS
 
 void drawRect(float x, float y, float width, float height, int color[3]) {
@@ -208,7 +212,7 @@ void drawCircle(float cx, float cy, float r, int segments, int color[3]) {
 }
 
 
-void drawContainer(float x, float y) {
+void dibujarContenedor(float x, float y) {
     // Dimensiones del contenedor (vertical)
     int containerWidth = OBSTACLE_WIDTH;
     int containerHeight = OBSTACLE_HEIGHT * 2;
@@ -220,13 +224,13 @@ void drawContainer(float x, float y) {
     // Marcos metálicos (gris oscuro)
     int frameColor[] = { 50, 50, 50 };
     // Horizontales
-    drawLineDDA((int)(x - containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)y, frameColor);
-    drawLineDDA((int)(x - containerWidth / 2), (int)(y + containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + containerHeight / 3), frameColor);
-    drawLineDDA((int)(x - containerWidth / 2), (int)(y + 2 * containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + 2 * containerHeight / 3), frameColor);
-    drawLineDDA((int)(x - containerWidth / 2), (int)(y + containerHeight), (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
+    algoritmoDDA((int)(x - containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)y, frameColor);
+    algoritmoDDA((int)(x - containerWidth / 2), (int)(y + containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + containerHeight / 3), frameColor);
+    algoritmoDDA((int)(x - containerWidth / 2), (int)(y + 2 * containerHeight / 3), (int)(x + containerWidth / 2), (int)(y + 2 * containerHeight / 3), frameColor);
+    algoritmoDDA((int)(x - containerWidth / 2), (int)(y + containerHeight), (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
     // Verticales
-    drawLineDDA((int)(x - containerWidth / 2), (int)y, (int)(x - containerWidth / 2), (int)(y + containerHeight), frameColor);
-    drawLineDDA((int)(x + containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
+    algoritmoDDA((int)(x - containerWidth / 2), (int)y, (int)(x - containerWidth / 2), (int)(y + containerHeight), frameColor);
+    algoritmoDDA((int)(x + containerWidth / 2), (int)y, (int)(x + containerWidth / 2), (int)(y + containerHeight), frameColor);
 
     // Detalle de puertas (azul oscuro)
     int doorColor[] = { 0, 50, 120 };
@@ -234,7 +238,7 @@ void drawContainer(float x, float y) {
     scanLineFill((int)(x - doorWidth), (int)(y + containerHeight / 4), doorWidth, containerHeight / 2, doorColor);
     scanLineFill((int)x, (int)(y + containerHeight / 4), doorWidth, containerHeight / 2, doorColor);
 }
-void drawObstacleRock(float x, float y) {
+void dibujarRocaObstaculo(float x, float y) {
     // Colores
     int edgeColor[] = { 0, 0, 0 };         
     int fillColor[] = { 160, 160, 160 };   
@@ -259,7 +263,7 @@ void drawObstacleRock(float x, float y) {
     int numVertices = sizeof(vx) / sizeof(vx[0]);
     for (int i = 0; i < numVertices; i++) {
         int next = (i + 1) % numVertices;
-        drawLineDDA(vx[i], vy[i], vx[next], vy[next], edgeColor);
+        algoritmoDDA(vx[i], vy[i], vx[next], vy[next], edgeColor);
     }
     int minY = vy[0], maxY = vy[0];
     for (int i = 1; i < numVertices; i++) {
@@ -295,7 +299,7 @@ void drawObstacleRock(float x, float y) {
 
         for (int i = 0; i < count; i += 2) {
             if (i + 1 < count) {
-                drawLineDDA(intersections[i], currentY, intersections[i + 1], currentY, fillColor);
+                algoritmoDDA(intersections[i], currentY, intersections[i + 1], currentY, fillColor);
             }
         }
     }
@@ -308,11 +312,12 @@ void drawObstacleRock(float x, float y) {
 
 
         if (endX > x - 45 && endX < x + 40 && endY > y + 5 && endY < y + 75) {
-            drawLineDDA(startX, startY, endX, endY, highlightColor);
+            algoritmoDDA(startX, startY, endX, endY, highlightColor);
         }
     }
 }
 //DIBUJAR PAISAJE
+
 void initDecorativos() {
     int spacing = (SCREEN_HEIGHT - 150) / (NUM_ELEMENTOS / 2);
 
@@ -331,7 +336,7 @@ void initDecorativos() {
     }
 }
 
-void drawTree(int x, int y) {
+void dibujarArbol(int x, int y) {
     int tronco[] = {129, 62, 9 };  // Marrón
     int copa[] = {38, 100, 17 };    // Verde oscuro
 
@@ -341,10 +346,11 @@ void drawTree(int x, int y) {
     // Copa (círculo)
     drawCircle(x, y + 20, 15, 20, copa);
 }
-void drawRock(int x, int y) {
+void dibujarRoca(int x, int y) {
     int rockColor[] = {128, 128, 128}; // Gris
     drawCircle(x, y, 10, 20, rockColor);
 }
+
 // FUNCIONES DEL JUEGO
 
 void updateJump() {
@@ -409,25 +415,6 @@ void specialKeyboard(int key, int x, int y) {
     }
 }
 
-void drawLineBresenham(int x0, int y0, int x1, int y1, int color[3]) {
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    int err = dx + dy, e2;
-
-    glColor3ub(color[0], color[1], color[2]);
-    glBegin(GL_POINTS);
-
-    while (1) {
-        glVertex2i(x0, y0);
-        if (x0 == x1 && y0 == y1) break;
-        e2 = 2 * err;
-        if (e2 >= dy) { err += dy; x0 += sx; }
-        if (e2 <= dx) { err += dx; y0 += sy; }
-    }
-
-    glEnd();
-}
-
 // VEHÍCULOS
 
 void drawKiaSoul(float x, float y) {
@@ -454,22 +441,22 @@ void drawKiaSoul(float x, float y) {
     scanLineFill(offsetX + 10 * scale, offsetY + 35 * scale, 20 * scale, 15 * scale, windowColor);
 
     // Dibujar bordes del cuerpo (negros)
-    drawLineBresenham(offsetX, offsetY + 10 * scale, offsetX, offsetY + 110 * scale, outlineColor);
-    drawLineBresenham(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 40 * scale, offsetY + 110 * scale, outlineColor);
-    drawLineBresenham(offsetX, offsetY + 110 * scale, offsetX + 5 * scale, offsetY + 115 * scale, outlineColor);
-    drawLineBresenham(offsetX + 40 * scale, offsetY + 110 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
-    drawLineBresenham(offsetX + 5 * scale, offsetY + 115 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
-    drawLineBresenham(offsetX, offsetY + 10 * scale, offsetX + 5 * scale, offsetY + 5 * scale, outlineColor);
-    drawLineBresenham(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
-    drawLineBresenham(offsetX + 5 * scale, offsetY + 5 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
+    bresenhamModificado(offsetX, offsetY + 10 * scale, offsetX, offsetY + 110 * scale, outlineColor);
+    bresenhamModificado(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 40 * scale, offsetY + 110 * scale, outlineColor);
+    bresenhamModificado(offsetX, offsetY + 110 * scale, offsetX + 5 * scale, offsetY + 115 * scale, outlineColor);
+    bresenhamModificado(offsetX + 40 * scale, offsetY + 110 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
+    bresenhamModificado(offsetX + 5 * scale, offsetY + 115 * scale, offsetX + 35 * scale, offsetY + 115 * scale, outlineColor);
+    bresenhamModificado(offsetX, offsetY + 10 * scale, offsetX + 5 * scale, offsetY + 5 * scale, outlineColor);
+    bresenhamModificado(offsetX + 40 * scale, offsetY + 10 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
+    bresenhamModificado(offsetX + 5 * scale, offsetY + 5 * scale, offsetX + 35 * scale, offsetY + 5 * scale, outlineColor);
 
     // Faros TRASEROS (rojos) - PARTE SUPERIOR
-    drawCircleMidpoint(offsetX + 5 * scale, offsetY + 115 * scale, 3 * scale, frontLightColor);  // Izquierdo
-    drawCircleMidpoint(offsetX + 35 * scale, offsetY + 115 * scale, 3 * scale,frontLightColor); // Derecho
+    circuloMedio(offsetX + 5 * scale, offsetY + 115 * scale, 3 * scale, frontLightColor);  // Izquierdo
+    circuloMedio(offsetX + 35 * scale, offsetY + 115 * scale, 3 * scale,frontLightColor); // Derecho
 
     // Faros DELANTEROS (amarillos) - PARTE INFERIOR
-    drawCircleMidpoint(offsetX + 5 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor);  // Izquierdo
-    drawCircleMidpoint(offsetX + 35 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor); // Derecho
+    circuloMedio(offsetX + 5 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor);  // Izquierdo
+    circuloMedio(offsetX + 35 * scale, offsetY + 5 * scale, 3 * scale, rearLightColor); // Derecho
 }
 
 
@@ -693,23 +680,23 @@ void drawCoaster(float x, float y) {
     scanLineFill((int)(x + 8), (int)(y + 85), (int)(ancho - 16), 8, ventana);
 
     // === MARCOS DE VENTANAS USANDO DRAWLINEDDA ===
-    drawLineDDA((int)(x + 6), (int)(y + 50), (int)(x + ancho - 6), (int)(y + 50), azulLED);
-    drawLineDDA((int)(x + 6), (int)(y + 62), (int)(x + ancho - 6), (int)(y + 62), azulLED);
-    drawLineDDA((int)(x + 8), (int)(y + 85), (int)(x + ancho - 8), (int)(y + 85), azulLED);
-    drawLineDDA((int)(x + 8), (int)(y + 93), (int)(x + ancho - 8), (int)(y + 93), azulLED);
+    algoritmoDDA((int)(x + 6), (int)(y + 50), (int)(x + ancho - 6), (int)(y + 50), azulLED);
+    algoritmoDDA((int)(x + 6), (int)(y + 62), (int)(x + ancho - 6), (int)(y + 62), azulLED);
+    algoritmoDDA((int)(x + 8), (int)(y + 85), (int)(x + ancho - 8), (int)(y + 85), azulLED);
+    algoritmoDDA((int)(x + 8), (int)(y + 93), (int)(x + ancho - 8), (int)(y + 93), azulLED);
 
     // === CONTORNO LED USANDO DRAWLINEDDA ===
     // Contorno horizontal
-    drawLineDDA((int)(x + radio), (int)(y - 1), (int)(x + ancho - radio), (int)(y - 1), azulLED);
-    drawLineDDA((int)(x + radio), (int)(y - 2), (int)(x + ancho - radio), (int)(y - 2), azulLED);
-    drawLineDDA((int)(x + radio), (int)(y + alto + 1), (int)(x + ancho - radio), (int)(y + alto + 1), azulLED);
-    drawLineDDA((int)(x + radio), (int)(y + alto + 2), (int)(x + ancho - radio), (int)(y + alto + 2), azulLED);
+    algoritmoDDA((int)(x + radio), (int)(y - 1), (int)(x + ancho - radio), (int)(y - 1), azulLED);
+    algoritmoDDA((int)(x + radio), (int)(y - 2), (int)(x + ancho - radio), (int)(y - 2), azulLED);
+    algoritmoDDA((int)(x + radio), (int)(y + alto + 1), (int)(x + ancho - radio), (int)(y + alto + 1), azulLED);
+    algoritmoDDA((int)(x + radio), (int)(y + alto + 2), (int)(x + ancho - radio), (int)(y + alto + 2), azulLED);
     
     // Contorno vertical
-    drawLineDDA((int)(x - 1), (int)(y + radio), (int)(x - 1), (int)(y + alto - radio), azulLED);
-    drawLineDDA((int)(x - 2), (int)(y + radio), (int)(x - 2), (int)(y + alto - radio), azulLED);
-    drawLineDDA((int)(x + ancho + 1), (int)(y + radio), (int)(x + ancho + 1), (int)(y + alto - radio), azulLED);
-    drawLineDDA((int)(x + ancho + 2), (int)(y + radio), (int)(x + ancho + 2), (int)(y + alto - radio), azulLED);
+    algoritmoDDA((int)(x - 1), (int)(y + radio), (int)(x - 1), (int)(y + alto - radio), azulLED);
+    algoritmoDDA((int)(x - 2), (int)(y + radio), (int)(x - 2), (int)(y + alto - radio), azulLED);
+    algoritmoDDA((int)(x + ancho + 1), (int)(y + radio), (int)(x + ancho + 1), (int)(y + alto - radio), azulLED);
+    algoritmoDDA((int)(x + ancho + 2), (int)(y + radio), (int)(x + ancho + 2), (int)(y + alto - radio), azulLED);
 
     // === ESQUINAS LED USANDO CIRCULOSPOLARES ===
     glColor3ub(azulLED[0], azulLED[1], azulLED[2]);
@@ -747,7 +734,7 @@ void drawCoaster(float x, float y) {
 
     // === DETALLES DECORATIVOS ===
     // Línea decorativa central usando drawLineDDA
-    drawLineDDA((int)(x + 10), (int)(y + 35), (int)(x + ancho - 10), (int)(y + 35), azulLED);
+    algoritmoDDA((int)(x + 10), (int)(y + 35), (int)(x + ancho - 10), (int)(y + 35), azulLED);
     
     // Puntos LED decorativos usando circulosPolares
     glColor3ub(azulLED[0], azulLED[1], azulLED[2]);
@@ -912,16 +899,16 @@ void display() {
     for (int i = 1; i < NUM_LANES; i++) {
         int x = ROAD_LEFT_MARGIN + (i * LANE_WIDTH);
         for (int y = (int)lineOffset % 30; y < SCREEN_HEIGHT - 105; y += 30) {
-            drawLineDDA(x, y, x, y + 15, amarillo);
+            algoritmoDDA(x, y, x, y + 15, amarillo);
         }
     }
 
     //arboles y rocas
     for (int i = 0; i < NUM_ELEMENTOS; i++) {
         if (decorativos[i].tipo == 1) {
-            drawTree((int)decorativos[i].x, (int)decorativos[i].y);
+            dibujarArbol((int)decorativos[i].x, (int)decorativos[i].y);
         } else if (decorativos[i].tipo == 2) {
-            drawRock((int)decorativos[i].x, (int)decorativos[i].y);
+            dibujarRoca((int)decorativos[i].x, (int)decorativos[i].y);
         }
     }
 
@@ -931,10 +918,10 @@ void display() {
             float obsY = (float)obstacles[i].y;
 
             if (obstacles[i].type == 0) {
-                drawContainer(obsX, obsY);
+                dibujarContenedor(obsX, obsY);
             }
             else {
-                drawObstacleRock(obsX, obsY);
+                dibujarRocaObstaculo(obsX, obsY);
             }
         }
     }
