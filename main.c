@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-
-
 #define M_PI 3.14159265358979323846
 #define SCREEN_WIDTH 600
 #define SCREEN_HEIGHT 680
