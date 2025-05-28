@@ -59,6 +59,10 @@ int showStartScreen = 1;
 int laneX[NUM_LANES];
 float lineOffset = 0.0f;
 float landscapeOffset = 0.0f;
+int nubeX1 = 0;
+int nubeDir1 = 1;
+int nubeX2 = 50;
+int nubeDir2 = -1;
 
 
 // ALGORITMOS DE DIBUJO
@@ -91,6 +95,19 @@ void circulosPolares(int cx, int cy, int r) {
     glEnd();
 }
 
+void algoritmoSemicirculo(int xc, int yc, int r) {
+    float theta;
+    float x, y;
+
+    glBegin(GL_POINTS);
+    for (theta = 0; theta <= M_PI; theta += 0.001) {
+        x = xc + r * cos(theta);
+        y = yc + r * sin(theta);
+        glVertex2i((int)x, (int)y);
+    }
+    glEnd();
+}
+
 void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
     glColor3f(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f);
     for (int y = yStart; y <= yStart + height; y++) {
@@ -98,6 +115,12 @@ void scanLineFill(int xStart, int yStart, int width, int height, int color[3]) {
         glVertex2f(xStart, y);
         glVertex2f(xStart + width, y);
         glEnd();
+    }
+}
+
+void circuloRelleno(int cx, int cy, int radius) {
+    for (int r = 0; r <= radius; r++) {
+        circulosPolares(cx, cy, r);
     }
 }
 
@@ -309,15 +332,7 @@ void initDecorativos() {
         decorativos[i].tipo = rand() % 3;
     }
 }
-void updateDecorativos() {
-    for (int i = 0; i < NUM_ELEMENTOS; i++) {
-        decorativos[i].y -= 5;
-        if (decorativos[i].y < -50) {
-            decorativos[i].y = SCREEN_HEIGHT - 100;
-            decorativos[i].tipo = rand() % 3; // nuevo tipo aleatorio
-        }
-    }
-}
+
 void drawTree(int x, int y) {
     int tronco[] = {129, 62, 9 };  // Marrón
     int copa[] = {38, 100, 17 };    // Verde oscuro
@@ -342,6 +357,16 @@ void updateJump() {
             cars[selectedCar].y = initialY;
             isJumping = 0;
             jumpTime = 0.0f;
+        }
+    }
+}
+
+void updateDecorativos() {
+    for (int i = 0; i < NUM_ELEMENTOS; i++) {
+        decorativos[i].y -= 5;
+        if (decorativos[i].y < -50) {
+            decorativos[i].y = SCREEN_HEIGHT - 100;
+            decorativos[i].tipo = rand() % 3; // nuevo tipo aleatorio
         }
     }
 }
@@ -406,21 +431,71 @@ void drawKiaSoul(float x, float y) {
     drawCircle(x + 20, y + 118, 4, 10, lightColor);
 }
 
-void drawMicrobus(float x, float y) {
-    int bodyColor[] = { 139, 69, 19 };     // Marrón oscuro
-    int cabinColor[] = { 255, 140, 0 };    // Naranja
-    int windowColor[] = { 200, 200, 255 }; // Azul claro
-    int wheelColor[] = { 20, 20, 20 };     // Gris oscuro
-    int lightColor[] = { 255, 255, 0 };    // Amarillo
+void dibujarBus(float x, float y) {
+    
+    //Cuerpo del Bus
+    glColor3ub(255, 44, 44);
+    glPointSize(4);
+    circulosPolares(x + 13, y + 1, 2);
+    circulosPolares(x + 37, y + 1, 2);
 
-    drawRect(x, y, 50, 100, bodyColor);
-    drawRect(x, y + 100, 50, 40, cabinColor);
-    drawRect(x + 10, y + 110, 30, 20, windowColor);
-    drawCircle(x - 5, y + 10, 10, 20, wheelColor);
-    drawCircle(x + 55, y + 10, 10, 20, wheelColor);
-    drawCircle(x - 5, y + 100, 10, 20, wheelColor);
-    drawCircle(x + 55, y + 100, 10, 20, wheelColor);
-    drawCircle(x + 25, y + 138, 4, 10, lightColor);
+    glColor3ub(0, 0, 0);
+    glPointSize(2);
+    algoritmoBresenham(x, y, x + 50, y); 
+    algoritmoBresenham(x + 50, y, x + 50, y + 90);
+    algoritmoBresenham(x + 50, y + 90, x, y + 90);
+    algoritmoBresenham(x, y + 90, x, y);
+
+    //Cabezal
+    glColor3ub(0, 0, 0);
+    glPointSize(2);
+    algoritmoBresenham(x + 5, y + 90, x + 5, y + 105);
+    algoritmoBresenham(x + 5, y + 105, x + 45, y + 105);
+    algoritmoBresenham(x + 45, y + 105, x + 45, y + 90);
+
+    glColor3ub(16, 88, 40);
+    glPointSize(10);
+    algoritmoBresenham(x + 11, y + 96 , x + 11, y + 100);
+    algoritmoBresenham(x + 21, y + 96, x + 21, y + 100);
+    algoritmoBresenham(x + 31, y + 96, x + 31, y + 100);
+    algoritmoBresenham(x + 39, y + 96, x + 39, y + 100);
+    
+    //Ventanas
+    glColor3ub(0, 0, 0);
+    glPointSize(8);
+    algoritmoBresenham(x + 12, y + 95, x + 12, y + 96);
+    algoritmoBresenham(x + 20, y + 95, x + 20, y + 96);
+
+    algoritmoBresenham(x + 30, y + 95, x + 30, y + 96); 
+    algoritmoBresenham(x + 38, y + 95, x + 38, y + 96);
+
+    //Luces
+    glColor3ub(255, 222, 33);
+    glPointSize(3);
+    algoritmoSemicirculo(x + 12, y + 106, 1);
+    algoritmoSemicirculo(x + 37, y + 106, 1);
+
+    
+    //Color
+    glColor3ub(16, 88, 40);
+    glPointSize(48);
+    algoritmoBresenham(x + 25, y + 25, x + 25, y + 66);
+    glPointSize(3);
+
+    //Detalles
+    glColor3ub(0, 0, 0);
+    glPointSize(1);
+    algoritmoBresenham(x + 10, y, x + 10, y + 90);
+    algoritmoBresenham(x + 20, y, x + 20, y + 90);
+    algoritmoBresenham(x + 30, y, x + 30, y + 90);
+    algoritmoBresenham(x + 40, y, x + 40, y + 90);
+
+    glColor3ub(6, 64, 43);
+    glPointSize(25);
+    algoritmoBresenham(x + 25, y + 20, x + 25, y + 25);
+    algoritmoBresenham(x + 25, y + 65, x + 25, y + 70);
+    glPointSize(3);
+
 }
 
 void drawMoto(int x, int y) {
@@ -483,9 +558,6 @@ void drawMoto(int x, int y) {
     algoritmoBresenham(dX + 6, dY + 1, dX + 6, dY + 15);
 }
 
-
-
-
 void drawCoaster(float x, float y) {
     int rojo[] = { 255, 0, 0 };
     int blanco[] = { 255, 255, 255 };
@@ -520,13 +592,32 @@ void drawCoaster(float x, float y) {
 }
 // DIBUJAR ESCENA
 
-void drawSky() {
+void dibujarCielo() {
     glColor3f(0.52f, 0.8f, 0.98f);
     algoritmoBresenham(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, SCREEN_HEIGHT - 100);
     algoritmoBresenham(0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     int skyColor[] = { 135, 206, 250 }; // Celeste
     scanLineFill(0, SCREEN_HEIGHT - 100, SCREEN_WIDTH, 100, skyColor);
+
+    glColor3ub(255, 222, 33);
+    circuloRelleno(SCREEN_WIDTH -55, SCREEN_HEIGHT - 40, 25);
+    glColor3ub(240, 210, 38);
+    glPointSize(2);
+    circulosPolares(SCREEN_WIDTH - 55, SCREEN_HEIGHT - 40, 32);
+    glPointSize(3);
+}
+
+void dibujarNubes(int x_offset, int y, float scale) {
+    glColor3f(0.9, 0.9, 0.9); // gris claro
+
+    float stretch = 1.5; // alargar horizontalmente
+
+    circuloRelleno(x_offset + scale * stretch * 0, y, scale * 15);
+    circuloRelleno(x_offset + scale * stretch * 20, y + scale * 6, scale * 18);
+    circuloRelleno(x_offset + scale * stretch * 40, y, scale * 15);
+    circuloRelleno(x_offset + scale * stretch * 20, y - scale * 6, scale * 15);
+
 }
 
 void display() {
@@ -602,7 +693,10 @@ void display() {
     }
 
     //Dibujamos un cielo
-    drawSky();
+    dibujarCielo();
+    // Dibuja nubes animadas
+    dibujarNubes(nubeX1, SCREEN_HEIGHT - 37, 0.8);
+    dibujarNubes(nubeX2, SCREEN_HEIGHT - 67, 0.8);
 
 
     // 1. Dibujar áreas verdes laterales (pasto)
@@ -662,19 +756,20 @@ void display() {
     float carY = cars[selectedCar].y;
 
     if (selectedCar == 0) {
-        drawMoto(carX - 4, carY - 55);
+        drawMoto(carX - 4, carY - 75);
     }
     else if (selectedCar == 1) {
         drawKiaSoul(carX - 3, carY - 55);
     }
     else if (selectedCar == 2) {
-        drawMicrobus(carX - 4, carY - 55);
-    }
-    else if (selectedCar == 3) {
         drawCoaster(carX - 4, carY - 55);
     }
-    glColor3f(1.0, 1.0, 1.0);
-    glRasterPos2f(15, SCREEN_HEIGHT - 90);
+    else if (selectedCar == 3) {
+        dibujarBus(carX - 5, carY - 60);      
+    }
+
+    glColor3f(0.0, 0.0, 0.0);
+    glRasterPos2f(15, SCREEN_HEIGHT - 88);
     char scoreStr[50];
     sprintf(scoreStr, "Puntuacion: %d", score);
     for (char* c = scoreStr; *c; c++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
@@ -683,6 +778,12 @@ void display() {
 }
 
 void update(int value) {
+    nubeX1 += nubeDir1 * 1; // Velocidad
+    nubeX2 += nubeDir2 * 1;
+
+    if (nubeX1 > SCREEN_WIDTH || nubeX1 < -100) nubeDir1 *= -1;
+    if (nubeX2 > SCREEN_WIDTH || nubeX2 < -100) nubeDir2 *= -1;
+
     if (!gameOver && !showStartScreen) {
         lineOffset -= 5.0f;
         landscapeOffset -= 5.0f;
